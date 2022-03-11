@@ -141,16 +141,17 @@ void CProjectile::Tick()
 		m_LifeSpan--;
 
 	int64_t TeamMask = -1LL;
-	bool IsWeaponCollide = false;
-	if(
-		pOwnerChar &&
-		pTargetChr &&
-		pOwnerChar->IsAlive() &&
-		pTargetChr->IsAlive() &&
-		!pTargetChr->CanCollide(m_Owner))
-	{
-		IsWeaponCollide = true;
-	}
+	// bool IsWeaponCollide = false;
+	// if(
+	// 	pOwnerChar &&
+	// 	pTargetChr &&
+	// 	pOwnerChar->IsAlive() &&
+	// 	pTargetChr->IsAlive() &&
+	// 	!pTargetChr->CanCollide(m_Owner))
+	// {
+	// 	IsWeaponCollide = true;
+	// }
+
 	if(pOwnerChar && pOwnerChar->IsAlive())
 	{
 		TeamMask = pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner);
