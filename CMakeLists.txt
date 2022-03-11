@@ -2121,6 +2121,12 @@ if(SERVER)
     entities/plasma.h
     entities/projectile.cpp
     entities/projectile.h
+    entities/wall.cpp
+    entities/wall.h
+    entities/turret.cpp
+    entities/turret.h
+    entities/panicdoor.cpp
+    entities/panicdoor.h
     entity.cpp
     entity.h
     eventhandler.cpp

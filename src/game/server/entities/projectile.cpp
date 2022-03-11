@@ -111,6 +111,14 @@ vec2 CProjectile::GetPos(float Time)
 
 void CProjectile::Tick()
 {
+	// This is to prevent from human shoot and then turn into zombie and then kill other humans with the bullet
+	if(m_Owner >= 0) {
+        if (!GameServer()->GetPlayerChar(m_Owner) ||
+		    !GameServer()->GetPlayerChar(m_Owner)->IsAlive() ||
+		    GameServer()->m_apPlayers[m_Owner]->GetTeam() != TEAM_BLUE) 
+		    return Reset();
+	}
+
 	float Pt = (Server()->Tick() - m_StartTick - 1) / (float)Server()->TickSpeed();
 	float Ct = (Server()->Tick() - m_StartTick) / (float)Server()->TickSpeed();
 	vec2 PrevPos = GetPos(Pt);
@@ -152,137 +160,29 @@ void CProjectile::Tick()
 		return;
 	}
 
-	if(((pTargetChr && (pOwnerChar ? !(pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_GRENADE) : g_Config.m_SvHit || m_Owner == -1 || pTargetChr == pOwnerChar)) || Collide || GameLayerClipped(CurPos)) && !IsWeaponCollide)
-	{
-		if(m_Explosive /*??*/ && (!pTargetChr || (pTargetChr && (!m_Freeze || (m_Type == WEAPON_SHOTGUN && Collide)))))
-		{
-			int Number = 1;
-			if(GameServer()->EmulateBug(BUG_GRENADE_DOUBLEEXPLOSION) && m_LifeSpan == -1)
-			{
-				Number = 2;
-			}
-			for(int i = 0; i < Number; i++)
-			{
-				GameServer()->CreateExplosion(ColPos, m_Owner, m_Type, m_Owner == -1, (!pTargetChr ? -1 : pTargetChr->Team()),
-					(m_Owner != -1) ? TeamMask : -1LL);
-				GameServer()->CreateSound(ColPos, m_SoundImpact,
-					(m_Owner != -1) ? TeamMask : -1LL);
-			}
-		}
-		else if(m_Freeze)
-		{
-			CCharacter *apEnts[MAX_CLIENTS];
-			int Num = GameWorld()->FindEntities(CurPos, 1.0f, (CEntity **)apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
-			for(int i = 0; i < Num; ++i)
-				if(apEnts[i] && (m_Layer != LAYER_SWITCH || (m_Layer == LAYER_SWITCH && m_Number > 0 && GameServer()->Collision()->m_pSwitchers[m_Number].m_Status[apEnts[i]->Team()])))
-					apEnts[i]->Freeze();
+    // ZombPanic
+
+    // Projectile colliding with the map
+	// Projectile getting out of the map
+	// Projectile colliding with player
+	if(
+		Collide || 
+		GameLayerClipped(CurPos) ||
+		(pTargetChr && pTargetChr->GetPlayer() && pTargetChr->GetPlayer()->GetTeam() != pOwnerChar->GetPlayer()->GetTeam())
+	)
+    {
+		if(m_LifeSpan >= 0 || m_Type == WEAPON_GRENADE)
+			GameServer()->CreateSound(CurPos, m_SoundImpact, TeamMask);
+
+		if(m_Explosive) {
+            GameServer()->CreateExplosion(CurPos, m_Owner, m_Type, false, -1, TeamMask);
+		} else if (pTargetChr && pTargetChr->GetPlayer()) {
+			// If colliding with player
+            pTargetChr->TakeDamage(m_Direction * maximum(0.001f, m_Force), m_Damage, m_Owner, m_Type);
 		}
 
-		if(pOwnerChar && !GameLayerClipped(ColPos) &&
-			((m_Type == WEAPON_GRENADE && pOwnerChar->HasTelegunGrenade()) || (m_Type == WEAPON_GUN && pOwnerChar->HasTelegunGun())))
-		{
-			int MapIndex = GameServer()->Collision()->GetPureMapIndex(pTargetChr ? pTargetChr->m_Pos : ColPos);
-			int TileFIndex = GameServer()->Collision()->GetFTileIndex(MapIndex);
-			bool IsSwitchTeleGun = GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_ALLOW_TELE_GUN;
-			bool IsBlueSwitchTeleGun = GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_ALLOW_BLUE_TELE_GUN;
-
-			if(IsSwitchTeleGun || IsBlueSwitchTeleGun)
-			{
-				// Delay specifies which weapon the tile should work for.
-				// Delay = 0 means all.
-				int delay = GameServer()->Collision()->GetSwitchDelay(MapIndex);
-
-				if(delay == 1 && m_Type != WEAPON_GUN)
-					IsSwitchTeleGun = IsBlueSwitchTeleGun = false;
-				if(delay == 2 && m_Type != WEAPON_GRENADE)
-					IsSwitchTeleGun = IsBlueSwitchTeleGun = false;
-				if(delay == 3 && m_Type != WEAPON_LASER)
-					IsSwitchTeleGun = IsBlueSwitchTeleGun = false;
-			}
-
-			if(TileFIndex == TILE_ALLOW_TELE_GUN || TileFIndex == TILE_ALLOW_BLUE_TELE_GUN || IsSwitchTeleGun || IsBlueSwitchTeleGun || pTargetChr)
-			{
-				bool Found;
-				vec2 PossiblePos;
-
-				if(!Collide)
-					Found = GetNearestAirPosPlayer(pTargetChr ? pTargetChr->m_Pos : ColPos, &PossiblePos);
-				else
-					Found = GetNearestAirPos(NewPos, CurPos, &PossiblePos);
-
-				if(Found)
-				{
-					pOwnerChar->m_TeleGunPos = PossiblePos;
-					pOwnerChar->m_TeleGunTeleport = true;
-					pOwnerChar->m_IsBlueTeleGunTeleport = TileFIndex == TILE_ALLOW_BLUE_TELE_GUN || IsBlueSwitchTeleGun;
-				}
-			}
-		}
-
-		if(Collide && m_Bouncing != 0)
-		{
-			m_StartTick = Server()->Tick();
-			m_Pos = NewPos + (-(m_Direction * 4));
-			if(m_Bouncing == 1)
-				m_Direction.x = -m_Direction.x;
-			else if(m_Bouncing == 2)
-				m_Direction.y = -m_Direction.y;
-			if(fabs(m_Direction.x) < 1e-6)
-				m_Direction.x = 0;
-			if(fabs(m_Direction.y) < 1e-6)
-				m_Direction.y = 0;
-			m_Pos += m_Direction;
-		}
-		else if(m_Type == WEAPON_GUN)
-		{
-			GameServer()->CreateDamageInd(CurPos, -atan2(m_Direction.x, m_Direction.y), 10, (m_Owner != -1) ? TeamMask : -1LL);
-			m_MarkedForDestroy = true;
-			return;
-		}
-		else
-		{
-			if(!m_Freeze)
-			{
-				m_MarkedForDestroy = true;
-				return;
-			}
-		}
-	}
-	if(m_LifeSpan == -1)
-	{
-		if(m_Explosive)
-		{
-			if(m_Owner >= 0)
-				pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
-
-			int64_t TeamMask = -1LL;
-			if(pOwnerChar && pOwnerChar->IsAlive())
-			{
-				TeamMask = pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner);
-			}
-
-			GameServer()->CreateExplosion(ColPos, m_Owner, m_Type, m_Owner == -1, (!pOwnerChar ? -1 : pOwnerChar->Team()),
-				(m_Owner != -1) ? TeamMask : -1LL);
-			GameServer()->CreateSound(ColPos, m_SoundImpact,
-				(m_Owner != -1) ? TeamMask : -1LL);
-		}
-		m_MarkedForDestroy = true;
-		return;
-	}
-
-	int x = GameServer()->Collision()->GetIndex(PrevPos, CurPos);
-	int z;
-	if(g_Config.m_SvOldTeleportWeapons)
-		z = GameServer()->Collision()->IsTeleport(x);
-	else
-		z = GameServer()->Collision()->IsTeleportWeapon(x);
-	CGameControllerDDRace *pControllerDDRace = (CGameControllerDDRace *)GameServer()->m_pController;
-	if(z && !pControllerDDRace->m_TeleOuts[z - 1].empty())
-	{
-		int TeleOut = GameServer()->m_World.m_Core.RandomOr0(pControllerDDRace->m_TeleOuts[z - 1].size());
-		m_Pos = pControllerDDRace->m_TeleOuts[z - 1][TeleOut];
-		m_StartTick = Server()->Tick();
-	}
+		Reset();
+	} 
 }
 
 void CProjectile::TickPaused()
