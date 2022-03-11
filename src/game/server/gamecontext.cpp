@@ -4338,6 +4338,4 @@ void CGameContext::ConAddMap(IConsole::IResult *pResult, void *pUserData)
 		str_format(aBuf, sizeof(aBuf), "Map %s added to the rotation list", pMapName);
 		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
 	}
-
-	return;
 }
