@@ -8,13 +8,13 @@
 class CWall : public CEntity
 {
 	int FindCharacters(vec2 Pos0, vec2 Pos1, float Radius, CCharacter **pChars, int Max);
+
 public:
-	CWall(CGameWorld *pGameWorld, vec2 From, vec2 To, int Owner, int Time, bool ZombiesIntersects); 
+	CWall(CGameWorld *pGameWorld, vec2 From, vec2 To, int Owner, int Time, bool ZombiesIntersects);
 
 	virtual void Reset();
-	virtual void Tick(); 
+	virtual void Tick();
 	virtual void Snap(int SnappingClient);
- 
 
 protected:
 	bool HitCharacter(CCharacter *Hit);

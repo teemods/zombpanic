@@ -65,7 +65,8 @@ protected:
 	bool m_ForceBalanced;
 
 	bool m_RoundStarted;
-    int m_LastZombie, m_LastZombie2;
+	int m_LastZombie, m_LastZombie2;
+
 public:
 	const char *m_pGameType;
 
@@ -154,7 +155,7 @@ public:
 
 	// DDNet-Skeleton
 	int m_aTeamscore[2];
-	
+
 	char m_aQueuedMap[MAX_MAP_LENGTH];
 	char m_aPreviousMap[MAX_MAP_LENGTH];
 

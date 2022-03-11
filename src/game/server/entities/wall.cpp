@@ -7,16 +7,16 @@
 
 #include "character.h"
 
-CWall::CWall(CGameWorld *pGameWorld, vec2 From, vec2 To, int Owner, int Time, bool ZombiesIntersects)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
+CWall::CWall(CGameWorld *pGameWorld, vec2 From, vec2 To, int Owner, int Time, bool ZombiesIntersects) :
+	CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
 	m_Pos = To;
 	m_From = From;
 	m_Owner = Owner;
 	m_OwnerChar = GameServer()->GetPlayerChar(m_Owner);
 	if(Time > 7)
-		m_OwnerChar->m_RiflePos = vec2(0,0);
-	m_Time = Time*Server()->TickSpeed();
+		m_OwnerChar->m_RiflePos = vec2(0, 0);
+	m_Time = Time * Server()->TickSpeed();
 	m_ID2 = Server()->SnapNewID();
 	ZombiesON = ZombiesIntersects;
 	GameWorld()->InsertEntity(this);
@@ -43,8 +43,8 @@ bool CWall::HitCharacter(CCharacter *Hit)
 			if(Len < apEnts[i]->GetProximityRadius() + 2.0f)
 			{
 				apEnts[i]->Core()->m_Pos = apEnts[i]->m_PrevPos;
-				apEnts[i]->Core()->m_Vel = vec2(0,0);
-				
+				apEnts[i]->Core()->m_Vel = vec2(0, 0);
+
 				if(apEnts[i]->Core()->m_Jumped >= 2)
 					apEnts[i]->Core()->m_Jumped = 1;
 			}
@@ -62,7 +62,7 @@ int CWall::FindCharacters(vec2 Pos0, vec2 Pos1, float Radius, CCharacter **ppCha
 		vec2 IntersectPos = Pos0;
 		if(Pos0 != Pos1)
 			closest_point_on_line(Pos0, Pos1, pCh->m_Pos, IntersectPos);
-		if(distance(pCh->m_Pos, IntersectPos) < pCh->GetProximityRadius()+Radius)
+		if(distance(pCh->m_Pos, IntersectPos) < pCh->GetProximityRadius() + Radius)
 		{
 			if(ppChars)
 				ppChars[Num] = pCh;
@@ -76,13 +76,12 @@ int CWall::FindCharacters(vec2 Pos0, vec2 Pos1, float Radius, CCharacter **ppCha
 
 void CWall::Tick()
 {
-	if (!GameServer()->GetPlayerChar(m_Owner) || (ZombiesON && GameServer()->m_apPlayers[m_Owner]->GetTeam() == TEAM_RED)
-			|| GameServer()->m_apPlayers[m_Owner]->GetTeam() == TEAM_SPECTATORS || !m_Time) 
+	if(!GameServer()->GetPlayerChar(m_Owner) || (ZombiesON && GameServer()->m_apPlayers[m_Owner]->GetTeam() == TEAM_RED) || GameServer()->m_apPlayers[m_Owner]->GetTeam() == TEAM_SPECTATORS || !m_Time)
 		return Reset();
 
 	m_Time--;
 
-	if (ZombiesON && GameServer()->Collision()->IntersectLine(m_Pos, m_From, &m_From, 0))
+	if(ZombiesON && GameServer()->Collision()->IntersectLine(m_Pos, m_From, &m_From, 0))
 	{
 		m_OwnerChar->GiveWeapon(WEAPON_LASER, false, 2);
 		return Reset();
@@ -99,7 +98,6 @@ void CWall::Tick()
 		HitCharacter(Hit);
 		HitCharacter(Hit2);
 	}
-	
 }
 void CWall::Snap(int SnappingClient)
 {
@@ -112,12 +110,12 @@ void CWall::Snap(int SnappingClient)
 	pObj->m_FromX = (int)m_From.x;
 	pObj->m_FromY = (int)m_From.y;
 	if(SnappingClient == m_Owner && ZombiesON)
-		pObj->m_StartTick = Server()->Tick()-3;
+		pObj->m_StartTick = Server()->Tick() - 3;
 	else
-		pObj->m_StartTick = Server()->Tick()-1;
+		pObj->m_StartTick = Server()->Tick() - 1;
 
 	CNetObj_Laser *pObj2 = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_ID2, sizeof(CNetObj_Laser)));
-	if (!pObj2)
+	if(!pObj2)
 		return;
 
 	pObj2->m_FromX = (int)m_From.x;
@@ -125,7 +123,7 @@ void CWall::Snap(int SnappingClient)
 	pObj2->m_X = (int)m_From.x;
 	pObj2->m_Y = (int)m_From.y;
 	if(SnappingClient == m_Owner && ZombiesON)
-		pObj2->m_StartTick = Server()->Tick()-3;
+		pObj2->m_StartTick = Server()->Tick() - 3;
 	else
-		pObj2->m_StartTick = Server()->Tick()-1;
+		pObj2->m_StartTick = Server()->Tick() - 1;
 }

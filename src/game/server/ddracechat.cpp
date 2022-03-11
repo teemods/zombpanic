@@ -16,7 +16,7 @@ void CGameContext::ConCredits(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
 
-    pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "credits",
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "credits",
 		"ZombPanic is run by Miguilim");
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "credits",
 		"DDNet is run by the DDNet staff (DDNet.tw/staff)");
@@ -434,7 +434,7 @@ void CGameContext::ConTop(IConsole::IResult *pResult, void *pUserData)
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	if(!CheckClientID(pResult->m_ClientID))
 		return;
-	
+
 	pSelf->Console()->Print(
 		IConsole::OUTPUT_LEVEL_STANDARD,
 		"rank",
@@ -827,7 +827,7 @@ void CGameContext::ConRank(IConsole::IResult *pResult, void *pUserData)
 	if(!CheckClientID(pResult->m_ClientID))
 		return;
 
-    // DDNet-Skeleton
+	// DDNet-Skeleton
 	pSelf->Console()->Print(
 		IConsole::OUTPUT_LEVEL_STANDARD,
 		"rank",

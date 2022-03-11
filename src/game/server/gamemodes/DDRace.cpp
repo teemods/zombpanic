@@ -30,12 +30,12 @@ CScore *CGameControllerDDRace::Score()
 
 void CGameControllerDDRace::OnCharacterSpawn(CCharacter *pChr)
 {
-	IGameController::OnCharacterSpawn(pChr);// default health
+	IGameController::OnCharacterSpawn(pChr); // default health
 
-    // DDrace
+	// DDrace
 	pChr->SetTeams(&m_Teams);
 	pChr->SetTeleports(&m_TeleOuts, &m_TeleCheckOuts);
-	
+
 	m_Teams.OnCharacterSpawn(pChr->GetPlayer()->GetCID());
 }
 
@@ -139,7 +139,7 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 		str_format(aBuf, sizeof(aBuf), "'%s' entered and joined the %s", Server()->ClientName(ClientID), GetTeamName(pPlayer->GetTeam()));
 		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CGameContext::CHAT_SIX);
 
-        /// DDNet-Skeleton
+		/// DDNet-Skeleton
 		GameServer()->SendChatTarget(ClientID, GAME_MOD_NAME " Version: " GAME_MOD_VERSION);
 		GameServer()->SendChatTarget(ClientID, "Say /info and make sure to read our /rules");
 	}
@@ -183,19 +183,19 @@ void CGameControllerDDRace::DoTeamChange(class CPlayer *pPlayer, int Team, bool 
 
 	// CCharacter *pCharacter = pPlayer->GetCharacter();
 
-	if (pPlayer->GetTeam() == TEAM_RED && Team != TEAM_SPECTATORS) 
+	if(pPlayer->GetTeam() == TEAM_RED && Team != TEAM_SPECTATORS)
 		return GameServer()->SendBroadcast("Zombies can't change team.", pPlayer->GetCID());
 
-	if (ZombieStarted() && !m_Warmup && Team == TEAM_BLUE)
+	if(ZombieStarted() && !m_Warmup && Team == TEAM_BLUE)
 		return GameServer()->SendBroadcast("You only can join the human team when round hasn't started.", pPlayer->GetCID());
-	
-	if (Team == TEAM_RED && ((ZombieStarted() && m_Warmup) || !ZombieStarted()))
+
+	if(Team == TEAM_RED && ((ZombieStarted() && m_Warmup) || !ZombieStarted()))
 		return GameServer()->SendBroadcast("Zombie will be chosen randomly.", pPlayer->GetCID());
 
-	if (pPlayer->GetTeam() == TEAM_BLUE && Team != TEAM_SPECTATORS && ZombieStarted())
+	if(pPlayer->GetTeam() == TEAM_BLUE && Team != TEAM_SPECTATORS && ZombieStarted())
 		return GameServer()->SendBroadcast("You can't join the zombie team.", pPlayer->GetCID());
-	
-	if (pPlayer->GetTeam() == TEAM_RED && NumZombies() < 2 && ZombieStarted())
+
+	if(pPlayer->GetTeam() == TEAM_RED && NumZombies() < 2 && ZombieStarted())
 		return GameServer()->SendBroadcast("You are the only zombie.", pPlayer->GetCID());
 
 	IGameController::DoTeamChange(pPlayer, Team, DoChatMsg);

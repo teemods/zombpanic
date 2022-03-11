@@ -84,7 +84,7 @@ public:
 	class CPlayer *GetPlayer() { return m_pPlayer; }
 	int64_t TeamMask();
 
-    // ZombPanic
+	// ZombPanic
 	vec2 GetVec2LastestInput();
 	void SetAutoHealthLimit();
 	void SetTurret();
@@ -250,21 +250,21 @@ public:
 
 	int m_SpawnTick;
 	int m_WeaponChangeTick;
-  
+
 	// DDNet-Skeleton
 	int m_MaxHealth;
 	int m_MaxArmor;
-  
+
 	// ZombPanic
 	vec2 m_RiflePos;
 	vec2 m_TurretFirstPos;
 	bool m_TurretActive[5];
 
-    // Hammer Invisible
+	// Hammer Invisible
 	int m_InvisibleTick;
 	int m_InvisibleCooldownTick;
 
-    // Tile Invisible
+	// Tile Invisible
 	int m_IsInInvisibleTile;
 
 	int m_InvisibleShieldID;

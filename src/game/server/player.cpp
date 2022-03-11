@@ -817,7 +817,8 @@ void CPlayer::ProcessPause()
 int CPlayer::Pause(int State, bool Force)
 {
 	// DDNet-Skeleton
-	if(!g_Config.m_SvSpectable) {
+	if(!g_Config.m_SvSpectable)
+	{
 		GameServer()->SendChatTarget(m_ClientID, "You can't spectate in game.");
 		return 0;
 	}
@@ -995,7 +996,7 @@ void CPlayer::SetZombie()
 {
 	m_Team = TEAM_RED;
 
-    GetCharacter()->GiveWeapon(WEAPON_GUN, true);
+	GetCharacter()->GiveWeapon(WEAPON_GUN, true);
 	GetCharacter()->SetWeapon(WEAPON_HAMMER);
 	GetCharacter()->ResetPickups();
 
@@ -1007,7 +1008,7 @@ void CPlayer::SetZombie()
 
 void CPlayer::ResetZombie()
 {
-	if (m_Team == TEAM_SPECTATORS)
+	if(m_Team == TEAM_SPECTATORS)
 		return;
 
 	m_Team = TEAM_BLUE;

@@ -26,7 +26,7 @@ CPickup::CPickup(CGameWorld *pGameWorld, int Type, int SubType, int Layer, int N
 
 void CPickup::Reset()
 {
-	if (GetPickUpRespawnDelay(m_Type) > 0)
+	if(GetPickUpRespawnDelay(m_Type) > 0)
 		m_SpawnTick = Server()->Tick() + Server()->TickSpeed() * GetPickUpRespawnDelay(m_Type);
 	else
 		m_SpawnTick = -1;
@@ -111,7 +111,7 @@ void CPickup::Tick()
 				CCharacter *pC = static_cast<CCharacter *>(GameServer()->m_World.FindFirst(CGameWorld::ENTTYPE_CHARACTER));
 				for(; pC; pC = (CCharacter *)pC->TypeNext())
 				{
-					if (pC != pChr)
+					if(pC != pChr)
 						pC->SetEmote(EMOTE_SURPRISE, Server()->Tick() + Server()->TickSpeed());
 				}
 				break;
@@ -204,16 +204,20 @@ void CPickup::Move()
 // 0 = health, 1 = armor, 2 = weapon, 3 = ninja
 int CPickup::GetPickUpRespawnTime(int Type)
 {
-	if(Type == 0) {
+	if(Type == 0)
+	{
 		return 15;
 	}
-	if(Type == 1) {
+	if(Type == 1)
+	{
 		return 15;
 	}
-	if(Type == 2) {
+	if(Type == 2)
+	{
 		return 15;
 	}
-	if(Type == 3) {
+	if(Type == 3)
+	{
 		return 15;
 	}
 
@@ -222,7 +226,8 @@ int CPickup::GetPickUpRespawnTime(int Type)
 
 int CPickup::GetPickUpRespawnDelay(int Type)
 {
-	if(Type == 3) {
+	if(Type == 3)
+	{
 		return 90;
 	}
 

@@ -11,8 +11,8 @@
 
 #include "panicdoor.h"
 
-CPanicDoor::CPanicDoor(CGameWorld *pGameWorld, int Number)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_PICKUP)
+CPanicDoor::CPanicDoor(CGameWorld *pGameWorld, int Number) :
+	CEntity(pGameWorld, CGameWorld::ENTTYPE_PICKUP)
 {
 	m_Number = Number;
 
@@ -27,20 +27,19 @@ void CPanicDoor::Reset()
 
 void CPanicDoor::Tick()
 {
-    m_State = GameServer()->m_pController->DoorState(m_Number);
+	m_State = GameServer()->m_pController->DoorState(m_Number);
 
 	if(m_State == DOOR_OPEN || m_State == DOOR_ZOMBIE_OPEN || m_State == DOOR_ZOMBIE_CLOSING || m_State == DOOR_ZOMBIE_REOPENED)
 		return;
 
 	CCharacter *pCloseChar[MAX_CLIENTS];
-	int Num = GameServer()->m_World.FindEntities(m_Pos, 8.0f, (CEntity**)pCloseChar, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+	int Num = GameServer()->m_World.FindEntities(m_Pos, 8.0f, (CEntity **)pCloseChar, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 	for(int i = 0; i < Num; i++)
 	{
 		if(
-			!pCloseChar[i]->IsAlive() || 
-			GameServer()->Collision()->IntersectLine(m_Pos, pCloseChar[i]->m_Pos, NULL, NULL) || 
-			(m_State == DOOR_ZOMBIE_CLOSED && pCloseChar[i]->GetPlayer()->GetTeam() == TEAM_BLUE)
-		)
+			!pCloseChar[i]->IsAlive() ||
+			GameServer()->Collision()->IntersectLine(m_Pos, pCloseChar[i]->m_Pos, NULL, NULL) ||
+			(m_State == DOOR_ZOMBIE_CLOSED && pCloseChar[i]->GetPlayer()->GetTeam() == TEAM_BLUE))
 			continue;
 
 		pCloseChar[i]->m_HittingDoor = true;
@@ -59,6 +58,6 @@ void CPanicDoor::Snap(int SnappingClient)
 
 	pP->m_X = (int)m_Pos.x;
 	pP->m_Y = (int)m_Pos.y;
-	pP->m_Type = (m_Number > MAX_DOORS/2) ? POWERUP_HEALTH : POWERUP_ARMOR;
+	pP->m_Type = (m_Number > MAX_DOORS / 2) ? POWERUP_HEALTH : POWERUP_ARMOR;
 	pP->m_Subtype = 0;
 }

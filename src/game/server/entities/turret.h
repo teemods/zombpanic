@@ -14,13 +14,13 @@ public:
 
 	void Fire();
 
-    void AddTurretExperience();
+	void AddTurretExperience();
 	void ResetRegenerationTime();
-    
+
 	int m_Owner;
-	
+
 private:
-    int m_inIDs[9];
+	int m_inIDs[9];
 	int m_IDC;
 	int m_IDG;
 	int m_IDS;
@@ -33,9 +33,8 @@ private:
 	bool BackSpeed;
 	bool m_ExpTime;
 	int m_Type;
-    int m_ReloadTick;
+	int m_ReloadTick;
 	int m_RegenerationTime;
 };
-
 
 #endif // GAME_SERVER_ENTITIES_TURRET_H

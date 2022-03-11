@@ -2352,8 +2352,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				switch(pMsg->m_Emoticon)
 				{
 				case EMOTICON_GHOST:
-				    EmoteType = EMOTE_SURPRISE;
-				    pChr->SetTurret();
+					EmoteType = EMOTE_SURPRISE;
+					pChr->SetTurret();
 					break;
 				case EMOTICON_EXCLAMATION:
 				case EMOTICON_QUESTION:
@@ -3109,9 +3109,9 @@ void CGameContext::OnConsoleInit()
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 
 	// DDNet-Skeleton
-	Console()->Register("skip_map", "", CFGFLAG_SERVER|CFGFLAG_STORE, ConSkipMap, this, "Change map to the next in the rotation");
-	Console()->Register("queue_map", "s", CFGFLAG_SERVER|CFGFLAG_STORE, ConQueueMap, this, "Set the next map");
-	Console()->Register("add_map", "s", CFGFLAG_SERVER|CFGFLAG_STORE, ConAddMap, this, "Add a map to the maps rotation list");
+	Console()->Register("skip_map", "", CFGFLAG_SERVER | CFGFLAG_STORE, ConSkipMap, this, "Change map to the next in the rotation");
+	Console()->Register("queue_map", "s", CFGFLAG_SERVER | CFGFLAG_STORE, ConQueueMap, this, "Set the next map");
+	Console()->Register("add_map", "s", CFGFLAG_SERVER | CFGFLAG_STORE, ConAddMap, this, "Add a map to the maps rotation list");
 
 #define CONSOLE_COMMAND(name, params, flags, callback, userdata, help) m_pConsole->Register(name, params, flags, callback, userdata, help);
 #include <game/ddracecommands.h>
@@ -3167,10 +3167,10 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	{
 		TuningList()[i] = TuningParams;
 		Tuning()->Set("gun_speed", 2200);
-	    Tuning()->Set("gun_curvature", 1.25f);
-	    Tuning()->Set("shotgun_speed", 200);
-	    Tuning()->Set("shotgun_speeddiff", 0);
-	    Tuning()->Set("shotgun_curvature", 0);
+		Tuning()->Set("gun_curvature", 1.25f);
+		Tuning()->Set("shotgun_speed", 200);
+		Tuning()->Set("shotgun_speeddiff", 0);
+		Tuning()->Set("shotgun_curvature", 0);
 	}
 
 	for(int i = 0; i < NUM_TUNEZONES; i++)
@@ -3187,10 +3187,10 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	else
 	{
 		Tuning()->Set("gun_speed", 2200);
-	    Tuning()->Set("gun_curvature", 1.25f);
-	    Tuning()->Set("shotgun_speed", 200);
-	    Tuning()->Set("shotgun_speeddiff", 0);
-	    Tuning()->Set("shotgun_curvature", 0);
+		Tuning()->Set("gun_curvature", 1.25f);
+		Tuning()->Set("shotgun_speed", 200);
+		Tuning()->Set("shotgun_speeddiff", 0);
+		Tuning()->Set("shotgun_curvature", 0);
 	}
 
 	if(g_Config.m_SvDDRaceTuneReset)
@@ -3417,7 +3417,7 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 				}
 			}
 
-            // ZombPanic
+			// ZombPanic
 			if(pTele)
 			{
 				Index = pTele[y * pTileMap->m_Width + x].m_Type;

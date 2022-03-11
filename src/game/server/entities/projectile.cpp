@@ -112,11 +112,12 @@ vec2 CProjectile::GetPos(float Time)
 void CProjectile::Tick()
 {
 	// This is to prevent from human shoot and then turn into zombie and then kill other humans with the bullet
-	if(m_Owner >= 0) {
-        if (!GameServer()->GetPlayerChar(m_Owner) ||
-		    !GameServer()->GetPlayerChar(m_Owner)->IsAlive() ||
-		    GameServer()->m_apPlayers[m_Owner]->GetTeam() != TEAM_BLUE) 
-		    return Reset();
+	if(m_Owner >= 0)
+	{
+		if(!GameServer()->GetPlayerChar(m_Owner) ||
+			!GameServer()->GetPlayerChar(m_Owner)->IsAlive() ||
+			GameServer()->m_apPlayers[m_Owner]->GetTeam() != TEAM_BLUE)
+			return Reset();
 	}
 
 	float Pt = (Server()->Tick() - m_StartTick - 1) / (float)Server()->TickSpeed();
@@ -160,29 +161,31 @@ void CProjectile::Tick()
 		return;
 	}
 
-    // ZombPanic
+	// ZombPanic
 
-    // Projectile colliding with the map
+	// Projectile colliding with the map
 	// Projectile getting out of the map
 	// Projectile colliding with player
 	if(
-		Collide || 
+		Collide ||
 		GameLayerClipped(CurPos) ||
-		(pTargetChr && pTargetChr->GetPlayer() && pTargetChr->GetPlayer()->GetTeam() != pOwnerChar->GetPlayer()->GetTeam())
-	)
-    {
+		(pTargetChr && pTargetChr->GetPlayer() && pTargetChr->GetPlayer()->GetTeam() != pOwnerChar->GetPlayer()->GetTeam()))
+	{
 		if(m_LifeSpan >= 0 || m_Type == WEAPON_GRENADE)
 			GameServer()->CreateSound(CurPos, m_SoundImpact, TeamMask);
 
-		if(m_Explosive) {
-            GameServer()->CreateExplosion(CurPos, m_Owner, m_Type, false, -1, TeamMask);
-		} else if (pTargetChr && pTargetChr->GetPlayer()) {
+		if(m_Explosive)
+		{
+			GameServer()->CreateExplosion(CurPos, m_Owner, m_Type, false, -1, TeamMask);
+		}
+		else if(pTargetChr && pTargetChr->GetPlayer())
+		{
 			// If colliding with player
-            pTargetChr->TakeDamage(m_Direction * maximum(0.001f, m_Force), m_Damage, m_Owner, m_Type);
+			pTargetChr->TakeDamage(m_Direction * maximum(0.001f, m_Force), m_Damage, m_Owner, m_Type);
 		}
 
 		Reset();
-	} 
+	}
 }
 
 void CProjectile::TickPaused()
