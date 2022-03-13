@@ -214,8 +214,7 @@ MACRO_CONFIG_INT(SvRoundsPerMap, sv_rounds_per_map, 1, 8, 100, CFGFLAG_SERVER, "
 MACRO_CONFIG_INT(SvTimelimit, sv_timelimit, 5, 3, 1000, CFGFLAG_SERVER, "Time limit in minutes (0 disables)")
 
 MACRO_CONFIG_INT(PanicGrenadeJumpHuman, panic_grenade_jump_human, 0, 0, 1, CFGFLAG_SERVER, "Grenade jump for human")
-MACRO_CONFIG_INT(PanicZombieRatio, panic_zombie_ratio, 16, 0, MAX_CLIENTS, CFGFLAG_SERVER, "Infection rate on start")
-MACRO_CONFIG_INT(PanicSecondZombie, panic_num_second_zombie, 8, 0, MAX_CLIENTS, CFGFLAG_SERVER, "Number of players to start with two zombies")
+MACRO_CONFIG_INT(PanicZombieRatio, panic_zombie_ratio, 8, 0, MAX_CLIENTS, CFGFLAG_SERVER, "Infection rate on start")
 MACRO_CONFIG_INT(PanicInvisibilityDuration, panic_invisibility_duration, 5, 1, 999, CFGFLAG_SERVER, "Duration of invisibility power (seconds)")
 MACRO_CONFIG_INT(PanicInvisibilityCooldown, panic_invisibility_cooldown, 30, 1, 999, CFGFLAG_SERVER, "Cooldown time of invisibility power (seconds)")
 

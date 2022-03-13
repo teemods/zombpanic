@@ -64,9 +64,6 @@ protected:
 	int m_UnbalancedTick;
 	bool m_ForceBalanced;
 
-	bool m_RoundStarted;
-	int m_LastZombie, m_LastZombie2;
-
 public:
 	const char *m_pGameType;
 
@@ -176,14 +173,15 @@ public:
 	void SkipMap();
 
 	// ZombPanic
+	int m_LastWarmup;
+	bool m_WarmupKilled;
+	int m_LastZombie, m_LastZombie2;
+
 	int NumPlayers();
 	int NumZombies();
 	int NumHumans();
-	bool ZombieStarted();
 	void ResetZombies();
-	void StartZombieRound(bool Value);
-	void CheckZombieRound();
-	void RandomZombie(int Mode);
+	void RandomZombie();
 	void DoWinCheck();
 
 	struct CPanicDoorController

@@ -32,24 +32,29 @@ bool CWall::HitCharacter(CCharacter *Hit)
 {
 	CCharacter *apEnts[MAX_CLIENTS];
 	int Num = FindCharacters(m_From, m_Pos, 2.5f, apEnts, MAX_CLIENTS);
+
 	for(int i = 0; i < Num; i++)
 	{
 		if(apEnts[i]->GetPlayer()->GetTeam() == TEAM_RED)
 		{
-			vec2 IntersectPos;
-			closest_point_on_line(m_Pos, m_From, apEnts[i]->m_Pos, IntersectPos);
-
-			float Len = distance(apEnts[i]->m_Pos, IntersectPos);
-			if(Len < apEnts[i]->GetProximityRadius() + 2.0f)
+			vec2 ClosestPoint;
+			
+            if(closest_point_on_line(m_Pos, m_From, apEnts[i]->m_Pos, ClosestPoint))
 			{
-				apEnts[i]->Core()->m_Pos = apEnts[i]->m_PrevPos;
-				apEnts[i]->Core()->m_Vel = vec2(0, 0);
+				float Distance = distance(apEnts[i]->m_Pos, ClosestPoint);
 
-				if(apEnts[i]->Core()->m_Jumped >= 2)
-					apEnts[i]->Core()->m_Jumped = 1;
+                if(Distance < apEnts[i]->GetProximityRadius() + 2.0f)
+				{
+					apEnts[i]->Core()->m_Pos = apEnts[i]->m_PrevPos;
+					apEnts[i]->Core()->m_Vel = vec2(0, 0);
+
+					if(apEnts[i]->Core()->m_Jumped >= 2)
+						apEnts[i]->Core()->m_Jumped = 1;
+				}
 			}
 		}
 	}
+
 	return true;
 }
 
