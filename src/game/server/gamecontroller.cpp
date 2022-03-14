@@ -561,13 +561,13 @@ void IGameController::StartRound()
 	m_ForceBalanced = false;
 	Server()->DemoRecorder_HandleAutoStart();
 
-    // Do warmup before start round or the round will finish every time since there is no zombies
+	// Do warmup before start round or the round will finish every time since there is no zombies
 	// Since the zombie is choosen after the warmup finish
 	DoWarmup(g_Config.m_SvWarmup);
 
-    // Reset doors && Reset all players to human and reset team score
+	// Reset doors && Reset all players to human and reset team score
 	ResetDoors();
-    ResetZombies();
+	ResetZombies();
 	m_aTeamscore[TEAM_RED] = m_aTeamscore[TEAM_BLUE] = 0;
 
 	char aBuf[256];
@@ -651,11 +651,12 @@ void IGameController::Tick()
 	{
 		// Only countdown warmup with players || Reset zombies history when no player
 		if(NumPlayers() > 1)
-	    {
-		    m_Warmup--;
+		{
+			m_Warmup--;
 
-            // Kill all players if enter second player
-			if(!m_WarmupKilled) {
+			// Kill all players if enter second player
+			if(!m_WarmupKilled)
+			{
 				StartRound();
 				m_WarmupKilled = true;
 			}
@@ -680,15 +681,15 @@ void IGameController::Tick()
 		if(NumPlayers() > 1 && !m_Warmup)
 		{
 			int ZAtStart = 1;
-	        ZAtStart = (int)NumPlayers() / (int)g_Config.m_PanicZombieRatio;
-        
-	        if(!ZAtStart)
-	        	ZAtStart = 1;
-        
-	        for(; ZAtStart; ZAtStart--)
-	        {
-	        	RandomZombie();
-	        }
+			ZAtStart = (int)NumPlayers() / (int)g_Config.m_PanicZombieRatio;
+
+			if(!ZAtStart)
+				ZAtStart = 1;
+
+			for(; ZAtStart; ZAtStart--)
+			{
+				RandomZombie();
+			}
 		}
 	}
 

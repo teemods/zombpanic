@@ -38,12 +38,12 @@ bool CWall::HitCharacter(CCharacter *Hit)
 		if(apEnts[i]->GetPlayer()->GetTeam() == TEAM_RED)
 		{
 			vec2 ClosestPoint;
-			
-            if(closest_point_on_line(m_Pos, m_From, apEnts[i]->m_Pos, ClosestPoint))
+
+			if(closest_point_on_line(m_Pos, m_From, apEnts[i]->m_Pos, ClosestPoint))
 			{
 				float Distance = distance(apEnts[i]->m_Pos, ClosestPoint);
 
-                if(Distance < apEnts[i]->GetProximityRadius() + 2.0f)
+				if(Distance < apEnts[i]->GetProximityRadius() + 2.0f)
 				{
 					apEnts[i]->Core()->m_Pos = apEnts[i]->m_PrevPos;
 					apEnts[i]->Core()->m_Vel = vec2(0, 0);
