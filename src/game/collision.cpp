@@ -856,6 +856,11 @@ bool CCollision::TileExists(int Index) const
 		return true;
 	if(m_pTune && m_pTune[Index].m_Type)
 		return true;
+
+	// ZombPanic
+	if(m_pTele && m_pTele[Index].m_Type == TILE_TELEOUT)
+		return true;
+
 	return TileExistsNext(Index);
 }
 

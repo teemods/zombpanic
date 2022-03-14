@@ -230,26 +230,26 @@ void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamag
 	// deal damage
 	CCharacter *apEnts[MAX_CLIENTS];
 	float Radius = 135.0f;
-	float InnerRadius = 48.0f;
+	// float InnerRadius = 48.0f;
 	int Num = m_World.FindEntities(Pos, Radius, (CEntity **)apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 	int64_t TeamMask = -1;
 	for(int i = 0; i < Num; i++)
 	{
-		vec2 Diff = apEnts[i]->m_Pos - Pos;
-		vec2 ForceDir(0, 1);
-		float l = length(Diff);
-		if(l)
-			ForceDir = normalize(Diff);
-		l = 1 - clamp((l - InnerRadius) / (Radius - InnerRadius), 0.0f, 1.0f);
-		float Strength;
-		if(Owner == -1 || !m_apPlayers[Owner] || !m_apPlayers[Owner]->m_TuneZone)
-			Strength = Tuning()->m_ExplosionStrength;
-		else
-			Strength = TuningList()[m_apPlayers[Owner]->m_TuneZone].m_ExplosionStrength;
+		// vec2 Diff = apEnts[i]->m_Pos - Pos;
+		// vec2 ForceDir(0, 1);
+		// float l = length(Diff);
+		// if(l)
+		// 	ForceDir = normalize(Diff);
+		// l = 1 - clamp((l - InnerRadius) / (Radius - InnerRadius), 0.0f, 1.0f);
+		// float Strength;
+		// if(Owner == -1 || !m_apPlayers[Owner] || !m_apPlayers[Owner]->m_TuneZone)
+		// 	Strength = Tuning()->m_ExplosionStrength;
+		// else
+		// 	Strength = TuningList()[m_apPlayers[Owner]->m_TuneZone].m_ExplosionStrength;
 
-		float Dmg = Strength * l;
-		if(!(int)Dmg)
-			continue;
+		// float Dmg = Strength * l;
+		// if(!(int)Dmg)
+		// 	continue;
 
 		if((GetPlayerChar(Owner) ? !(GetPlayerChar(Owner)->m_Hit & CCharacter::DISABLE_HIT_GRENADE) : g_Config.m_SvHit || NoDamage) || Owner == apEnts[i]->GetPlayer()->GetCID())
 		{
@@ -267,7 +267,7 @@ void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamag
 				TeamMask = CmaskUnset(TeamMask, PlayerTeam);
 			}
 
-			apEnts[i]->TakeDamage(ForceDir * Dmg * 2, (int)Dmg, Owner, Weapon);
+			apEnts[i]->TakeDamage(normalize(apEnts[i]->m_Pos - Pos) * g_Config.m_PanicGrenadeInitialDamage * 2, g_Config.m_PanicGrenadeInitialDamage, Owner, Weapon);
 		}
 	}
 }
@@ -2351,8 +2351,11 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				int EmoteType = EMOTE_NORMAL;
 				switch(pMsg->m_Emoticon)
 				{
-				case EMOTICON_EXCLAMATION:
 				case EMOTICON_GHOST:
+					EmoteType = EMOTE_SURPRISE;
+					pChr->SetTurret();
+					break;
+				case EMOTICON_EXCLAMATION:
 				case EMOTICON_QUESTION:
 				case EMOTICON_WTF:
 					EmoteType = EMOTE_SURPRISE;
@@ -3170,11 +3173,11 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	for(int i = 0; i < NUM_TUNEZONES; i++)
 	{
 		TuningList()[i] = TuningParams;
-		TuningList()[i].Set("gun_curvature", 0);
-		TuningList()[i].Set("gun_speed", 1400);
-		TuningList()[i].Set("shotgun_curvature", 0);
-		TuningList()[i].Set("shotgun_speed", 500);
-		TuningList()[i].Set("shotgun_speeddiff", 0);
+		Tuning()->Set("gun_speed", 2200);
+		Tuning()->Set("gun_curvature", 1.25f);
+		Tuning()->Set("shotgun_speed", 200);
+		Tuning()->Set("shotgun_speeddiff", 0);
+		Tuning()->Set("shotgun_curvature", 0);
 	}
 
 	for(int i = 0; i < NUM_TUNEZONES; i++)
@@ -3190,9 +3193,9 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	}
 	else
 	{
-		Tuning()->Set("gun_speed", 1400);
-		Tuning()->Set("gun_curvature", 0);
-		Tuning()->Set("shotgun_speed", 500);
+		Tuning()->Set("gun_speed", 2200);
+		Tuning()->Set("gun_curvature", 1.25f);
+		Tuning()->Set("shotgun_speed", 200);
 		Tuning()->Set("shotgun_speeddiff", 0);
 		Tuning()->Set("shotgun_curvature", 0);
 	}
@@ -3219,19 +3222,13 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 
 	m_MapBugs.Dump();
 
-	if(g_Config.m_SvSoloServer)
+	Tuning()->Set("player_collision", 0);
+	Tuning()->Set("player_hooking", 0);
+
+	for(int i = 0; i < NUM_TUNEZONES; i++)
 	{
-		g_Config.m_SvTeam = SV_TEAM_FORCED_SOLO;
-		g_Config.m_SvShowOthersDefault = SHOW_OTHERS_ON;
-
-		Tuning()->Set("player_collision", 0);
-		Tuning()->Set("player_hooking", 0);
-
-		for(int i = 0; i < NUM_TUNEZONES; i++)
-		{
-			TuningList()[i].Set("player_collision", 0);
-			TuningList()[i].Set("player_hooking", 0);
-		}
+		TuningList()[i].Set("player_collision", 0);
+		TuningList()[i].Set("player_hooking", 0);
 	}
 
 	m_pController = new CGameControllerDDRace(this);
@@ -3331,10 +3328,16 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 
 	CTile *pFront = 0;
 	CSwitchTile *pSwitch = 0;
+
 	if(m_Layers.FrontLayer())
 		pFront = (CTile *)Kernel()->RequestInterface<IMap>()->GetData(m_Layers.FrontLayer()->m_Front);
 	if(m_Layers.SwitchLayer())
 		pSwitch = (CSwitchTile *)Kernel()->RequestInterface<IMap>()->GetData(m_Layers.SwitchLayer()->m_Switch);
+
+	// ZombPanic
+	CTeleTile *pTele = 0;
+	if(m_Layers.TeleLayer())
+		pTele = (CTeleTile *)Kernel()->RequestInterface<IMap>()->GetData(m_Layers.TeleLayer()->m_Tele);
 
 	for(int y = 0; y < pTileMap->m_Height; y++)
 	{
@@ -3408,6 +3411,7 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 					m_pController->OnEntity(Index - ENTITY_OFFSET, Pos, LAYER_FRONT, pFront[y * pTileMap->m_Width + x].m_Flags);
 				}
 			}
+
 			if(pSwitch)
 			{
 				Index = pSwitch[y * pTileMap->m_Width + x].m_Type;
@@ -3417,6 +3421,18 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 				{
 					vec2 Pos(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
 					m_pController->OnEntity(Index - ENTITY_OFFSET, Pos, LAYER_SWITCH, pSwitch[y * pTileMap->m_Width + x].m_Flags, pSwitch[y * pTileMap->m_Width + x].m_Number);
+				}
+			}
+
+			// ZombPanic
+			if(pTele)
+			{
+				Index = pTele[y * pTileMap->m_Width + x].m_Type;
+
+				if(Index > 0)
+				{
+					vec2 Pos(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
+					m_pController->OnEntity(Index, Pos, LAYER_TELE, -1, pTele[y * pTileMap->m_Width + x].m_Number);
 				}
 			}
 		}
@@ -3852,9 +3868,9 @@ void CGameContext::ResetTuning()
 {
 	CTuningParams TuningParams;
 	m_Tuning = TuningParams;
-	Tuning()->Set("gun_speed", 1400);
-	Tuning()->Set("gun_curvature", 0);
-	Tuning()->Set("shotgun_speed", 500);
+	Tuning()->Set("gun_speed", 2200);
+	Tuning()->Set("gun_curvature", 1.25f);
+	Tuning()->Set("shotgun_speed", 200);
 	Tuning()->Set("shotgun_speeddiff", 0);
 	Tuning()->Set("shotgun_curvature", 0);
 	SendTuningParams(-1);

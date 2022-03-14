@@ -1231,28 +1231,11 @@ set(EXPECTED_DATA
   mapres/winter_mountains.png
   mapres/winter_mountains2.png
   mapres/winter_mountains3.png
-  maps/Gold\ Mine.map
-  maps/LearnToPlay.map
-  maps/Sunny\ Side\ Up.map
-  maps/Tsunami.map
-  maps/ctf1.map
-  maps/ctf2.map
-  maps/ctf3.map
-  maps/ctf4.map
-  maps/ctf5.map
-  maps/ctf6.map
-  maps/ctf7.map
-  maps/dm1.map
-  maps/dm2.map
-  maps/dm6.map
-  maps/dm7.map
-  maps/dm8.map
-  maps/dm9.map
-  maps/license.txt
-  maps7/Gold\ Mine.map
-  maps7/LearnToPlay.map
-  maps7/Sunny\ Side\ Up.map
-  maps7/Tsunami.map
+  maps/Armory.map
+  maps/Beach\ House\ 2.map
+  maps/Depot\ 2.map
+  maps/Shelter.map
+  maps/Tunnel.map
   maps7/readme.txt
   menuimages/demos.png
   menuimages/editor.png
@@ -2115,12 +2098,18 @@ if(SERVER)
     entities/laser.h
     entities/light.cpp
     entities/light.h
+    entities/panicdoor.cpp
+    entities/panicdoor.h
     entities/pickup.cpp
     entities/pickup.h
     entities/plasma.cpp
     entities/plasma.h
     entities/projectile.cpp
     entities/projectile.h
+    entities/turret.cpp
+    entities/turret.h
+    entities/wall.cpp
+    entities/wall.h
     entity.cpp
     entity.h
     eventhandler.cpp

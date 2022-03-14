@@ -16,6 +16,10 @@
 #include <game/server/score.h>
 #include <game/server/teams.h>
 
+#include "panicdoor.h"
+#include "turret.h"
+#include "wall.h"
+
 MACRO_ALLOC_POOL_ID_IMPL(CCharacter, MAX_CLIENTS)
 
 // Character, "physical" player's part
@@ -33,6 +37,11 @@ CCharacter::CCharacter(CGameWorld *pWorld) :
 	m_Input.m_TargetY = -1;
 
 	m_LatestPrevPrevInput = m_LatestPrevInput = m_LatestInput = m_PrevInput = m_SavedInput = m_Input;
+
+	// ZombPanic
+	m_InvisibleShieldID = Server()->SnapNewID();
+	m_InvisibleTick = m_InvisibleCooldownTick = 0;
+	m_IsInInvisibleTile = false;
 }
 
 void CCharacter::Reset()
@@ -66,7 +75,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision());
-	m_Core.m_ActiveWeapon = WEAPON_GUN;
+	m_Core.m_ActiveWeapon = GetPlayer()->GetTeam() == TEAM_RED ? WEAPON_HAMMER : WEAPON_GUN;
 	m_Core.m_Pos = m_Pos;
 	GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = &m_Core;
 
@@ -88,6 +97,9 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
 
 	Server()->StartRecord(m_pPlayer->GetCID());
+
+	// ZombPanic
+	m_TurretActive[0] = m_TurretActive[1] = m_TurretActive[2] = m_TurretActive[3] = m_TurretActive[4] = false;
 
 	return true;
 }
@@ -201,7 +213,7 @@ void CCharacter::HandleNinja()
 		GameServer()->CreateDamageInd(m_Pos, 0, NinjaTime / Server()->TickSpeed(), Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 	}
 
-	m_Armor = clamp(m_MaxArmor - (NinjaTime / 15), 0, m_MaxArmor);
+	// m_Armor = clamp(m_MaxArmor - (NinjaTime / 15), 0, m_MaxArmor);
 
 	// force ninja Weapon
 	SetWeapon(WEAPON_NINJA);
@@ -269,7 +281,7 @@ void CCharacter::HandleNinja()
 				if(m_NumObjectsHit < 10)
 					m_apHitObjects[m_NumObjectsHit++] = aEnts[i];
 
-				aEnts[i]->TakeDamage(vec2(0, -10.0f), g_pData->m_Weapons.m_Ninja.m_pBase->m_Damage, m_pPlayer->GetCID(), WEAPON_NINJA);
+				aEnts[i]->TakeDamage(vec2(0, -10.0f), g_Config.m_PanicNinjaInitialDamage, m_pPlayer->GetCID(), WEAPON_NINJA);
 			}
 		}
 
@@ -351,7 +363,8 @@ void CCharacter::FireWeapon()
 	bool FullAuto = false;
 	if(m_Core.m_ActiveWeapon == WEAPON_GRENADE || m_Core.m_ActiveWeapon == WEAPON_SHOTGUN || m_Core.m_ActiveWeapon == WEAPON_LASER)
 		FullAuto = true;
-	if(m_Jetpack && m_Core.m_ActiveWeapon == WEAPON_GUN)
+	// if(m_Jetpack && m_Core.m_ActiveWeapon == WEAPON_GUN)
+	if(m_Core.m_ActiveWeapon == WEAPON_GUN)
 		FullAuto = true;
 	// allow firing directly after coming out of freeze or being unfrozen
 	// by something
@@ -387,9 +400,9 @@ void CCharacter::FireWeapon()
 	// check for ammo
 	if(!m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
 	{
-		/*// 125ms is a magical limit of how fast a human can click
+		// 125ms is a magical limit of how fast a human can click
 		m_ReloadTimer = 125 * Server()->TickSpeed() / 1000;
-		GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO);*/
+		GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO);
 		return;
 	}
 
@@ -413,12 +426,47 @@ void CCharacter::FireWeapon()
 		int Num = GameServer()->m_World.FindEntities(ProjStartPos, GetProximityRadius() * 0.5f, (CEntity **)apEnts,
 			MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 
+		// Zombie destroy Turret system
+		if(GetPlayer()->GetTeam() == TEAM_RED)
+		{
+			CTurret *pClosest = (CTurret *)GameWorld()->FindFirst(CGameWorld::ENTTYPE_TURRET);
+			while(pClosest)
+			{
+				if(distance(pClosest->m_Pos, m_Pos) <= 25)
+				{
+					if(!GameServer()->Collision()->IntersectLine(m_Pos, pClosest->m_Pos, 0, 0))
+					{
+						if(GameServer()->GetPlayerChar(pClosest->m_Owner))
+							GameServer()->CreateSoundGlobal(35, pClosest->m_Owner);
+
+						GameServer()->CreateHammerHit(pClosest->m_Pos);
+						pClosest->Reset();
+
+						GetPlayer()->m_Score += 1;
+					}
+				}
+				pClosest = (CTurret *)pClosest->TypeNext();
+			}
+		}
+
+		// Human invisible system
+		if(GetPlayer()->GetTeam() == TEAM_BLUE)
+		{
+			if(!m_InvisibleCooldownTick)
+			{
+				GameServer()->CreatePlayerSpawn(m_Pos);
+
+				m_InvisibleTick = g_Config.m_PanicInvisibilityDuration * Server()->TickSpeed();
+				m_InvisibleCooldownTick = g_Config.m_PanicInvisibilityCooldown * Server()->TickSpeed();
+			}
+		}
+
 		for(int i = 0; i < Num; ++i)
 		{
 			CCharacter *pTarget = apEnts[i];
 
 			//if ((pTarget == this) || GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL))
-			if((pTarget == this || (pTarget->IsAlive() && !CanCollide(pTarget->GetPlayer()->GetCID()))))
+			if((pTarget == this || pTarget->m_InvisibleTick || (pTarget->IsAlive() && !CanCollide(pTarget->GetPlayer()->GetCID()))))
 				continue;
 
 			// set his velocity to fast upward (for now)
@@ -432,24 +480,8 @@ void CCharacter::FireWeapon()
 				Dir = normalize(pTarget->m_Pos - m_Pos);
 			else
 				Dir = vec2(0.f, -1.f);
-			/*pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage,
-					m_pPlayer->GetCID(), m_Core.m_ActiveWeapon);*/
 
-			float Strength;
-			if(!m_TuneZone)
-				Strength = GameServer()->Tuning()->m_HammerStrength;
-			else
-				Strength = GameServer()->TuningList()[m_TuneZone].m_HammerStrength;
-
-			vec2 Temp = pTarget->m_Core.m_Vel + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f;
-			Temp = ClampVel(pTarget->m_MoveRestrictions, Temp);
-			Temp -= pTarget->m_Core.m_Vel;
-			pTarget->TakeDamage((vec2(0.f, -1.0f) + Temp) * Strength, g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage,
-				m_pPlayer->GetCID(), m_Core.m_ActiveWeapon);
-			pTarget->UnFreeze();
-
-			if(m_FreezeHammer)
-				pTarget->Freeze();
+			pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, g_Config.m_PanicHammerPlayerInitialDamage, m_pPlayer->GetCID(), m_Core.m_ActiveWeapon);
 
 			Antibot()->OnHammerHit(m_pPlayer->GetCID(), pTarget->GetPlayer()->GetCID());
 
@@ -488,8 +520,11 @@ void CCharacter::FireWeapon()
 				Lifetime, //Span
 				false, //Freeze
 				false, //Explosive
-				0, //Force
-				-1 //SoundImpact
+				1, //Force
+				-1, //SoundImpact
+				0, // Layer
+				0, // Number
+				g_Config.m_PanicGunInitialDamage // Damage
 			);
 
 			GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
@@ -499,31 +534,47 @@ void CCharacter::FireWeapon()
 
 	case WEAPON_SHOTGUN:
 	{
-		/*int ShotSpread = 2;
-
-			for(int i = -ShotSpread; i <= ShotSpread; ++i)
-			{
-				float Spreading[] = {-0.185f, -0.070f, 0, 0.070f, 0.185f};
-				float a = angle(Direction);
-				a += Spreading[i+2];
-				float v = 1-(absolute(i)/(float)ShotSpread);
-				float Speed = mix((float)GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
-				CProjectile *pProj = new CProjectile(GameWorld(), WEAPON_SHOTGUN,
-					m_pPlayer->GetCID(),
-					ProjStartPos,
-					vec2(cosf(a), sinf(a))*Speed,
-					(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_ShotgunLifetime),
-					1, 0, 0, -1);
-			}
-
-			GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE);*/
-		float LaserReach;
+		int Lifetime;
 		if(!m_TuneZone)
-			LaserReach = GameServer()->Tuning()->m_LaserReach;
+			Lifetime = (int)(Server()->TickSpeed() * GameServer()->Tuning()->m_ShotgunLifetime);
 		else
-			LaserReach = GameServer()->TuningList()[m_TuneZone].m_LaserReach;
+			Lifetime = (int)(Server()->TickSpeed() * GameServer()->TuningList()[m_TuneZone].m_ShotgunLifetime);
 
-		new CLaser(&GameServer()->m_World, m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_SHOTGUN);
+		int ShotSpread = 5;
+		if(ShotSpread > 15)
+		{
+			ShotSpread = 15;
+			if(ShotSpread > 36)
+				ShotSpread = 36;
+		}
+
+		float Spreading[20 * 2 + 1];
+		for(int i = 0; i < 20 * 2 + 1; i++)
+			Spreading[i] = -1.2f + 0.06f * i;
+
+		for(int i = -ShotSpread / 2; i <= ShotSpread / 2; ++i)
+		{
+			float a = angle(Direction);
+			a += Spreading[i + 20];
+			float v = 1 - (absolute(i) / (float)ShotSpread) / 2;
+			float Speed = mix((float)GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.2f, v);
+			new CProjectile(
+				GameWorld(),
+				WEAPON_SHOTGUN, //Type
+				GetPlayer()->GetCID(), //Owner
+				ProjStartPos, //Pos
+				vec2(cosf(a), sinf(a)) * Speed, // Dir
+				Lifetime, // Span
+				false, // Freeze
+				false, // Explosive
+				3, // Force
+				-1, // SoundImpact
+				0, // Layer
+				0, // Number
+				g_Config.m_PanicShotgunInitialDamage // Damage
+			);
+		}
+
 		GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 	}
 	break;
@@ -545,9 +596,12 @@ void CCharacter::FireWeapon()
 			Lifetime, //Span
 			false, //Freeze
 			true, //Explosive
-			0, //Force
-			SOUND_GRENADE_EXPLODE //SoundImpact
-		); //SoundImpact
+			2, //Force
+			SOUND_GRENADE_EXPLODE, //SoundImpact,
+			0, // Layer
+			0, // Number
+			0 // Damage
+		);
 
 		GameServer()->CreateSound(m_Pos, SOUND_GRENADE_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 	}
@@ -555,14 +609,21 @@ void CCharacter::FireWeapon()
 
 	case WEAPON_LASER:
 	{
-		float LaserReach;
-		if(!m_TuneZone)
-			LaserReach = GameServer()->Tuning()->m_LaserReach;
+		// vec2 To;
+		if(m_RiflePos != vec2(0, 0))
+		{
+			if(m_RiflePos == m_Pos)
+			{
+				m_aWeapons[WEAPON_LASER].m_Ammo = 2;
+				GameServer()->SendChatTarget(GetPlayer()->GetCID(), "The second point can not be set here");
+				m_RiflePos = vec2(0, 0);
+				return;
+			}
+			new CWall(GameWorld(), m_RiflePos, m_Pos, GetPlayer()->GetCID(), 8, true);
+			GameServer()->CreateSound(m_Pos, SOUND_LASER_FIRE);
+		}
 		else
-			LaserReach = GameServer()->TuningList()[m_TuneZone].m_LaserReach;
-
-		new CLaser(GameWorld(), m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_LASER);
-		GameServer()->CreateSound(m_Pos, SOUND_LASER_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
+			m_RiflePos = m_Pos;
 	}
 	break;
 
@@ -582,8 +643,8 @@ void CCharacter::FireWeapon()
 
 	m_AttackTick = Server()->Tick();
 
-	/*if(m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo > 0) // -1 == unlimited
-		m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo--;*/
+	if(m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo > 0) // -1 == unlimited
+		m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo--;
 
 	if(!m_ReloadTimer)
 	{
@@ -610,6 +671,25 @@ void CCharacter::HandleWeapons()
 	{
 		m_ReloadTimer--;
 		return;
+	}
+
+	// pistol ammo regeneration
+	int AmmoRegenTime = g_pData->m_Weapons.m_aId[m_Core.m_ActiveWeapon].m_Ammoregentime;
+	if(AmmoRegenTime)
+	{
+		if(m_ReloadTimer <= 0)
+		{
+			if(m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart < 0)
+				m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart = Server()->Tick();
+
+			if((Server()->Tick() - m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart) >= AmmoRegenTime * Server()->TickSpeed() / 1000)
+			{
+				m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo = minimum(m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo + 1, g_pData->m_Weapons.m_aId[m_Core.m_ActiveWeapon].m_Maxammo);
+				m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart = -1;
+			}
+		}
+		else
+			m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart = -1;
 	}
 
 	// fire Weapon, if wanted
@@ -748,10 +828,80 @@ void CCharacter::Tick()
 		}
 	}
 
+	// ZombPanic
+	if(m_HittingDoor)
+	{
+		m_Core.m_Vel += m_PushDirection * length(m_Core.m_Vel);
+		if(m_Core.m_Jumped & 3)
+			m_Core.m_Jumped &= ~2; // ????
+	}
+	m_HittingDoor = false;
+
 	// Previnput
 	m_PrevInput = m_Input;
 
 	m_PrevPos = m_Core.m_Pos;
+
+	// ZombPanic
+
+	// Human statuses
+	if(GetPlayer()->GetTeam() == TEAM_BLUE)
+	{
+		// Using this logic the countdown will start
+		// only after the invisibility effect finish
+		if(m_InvisibleTick)
+		{
+			m_InvisibleTick--;
+
+			// Show invisible timer
+			if(Server()->Tick() % 2 == 0)
+			{
+				int Seconds = m_InvisibleTick / Server()->TickSpeed();
+				int MiliSeconds = ((float)m_InvisibleTick / (float)Server()->TickSpeed() - m_InvisibleTick / Server()->TickSpeed()) * 100;
+
+				char aBuf[64];
+				str_format(aBuf, sizeof(aBuf), "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nInvisible: %d.%d", Seconds, MiliSeconds);
+				GameServer()->SendBroadcast(aBuf, GetPlayer()->GetCID());
+			}
+
+			// Player is back visible
+			if(!m_InvisibleTick && GetPlayer()->GetTeam() == TEAM_BLUE)
+			{
+				GameServer()->CreatePlayerSpawn(m_Pos);
+			}
+		}
+		else if(m_InvisibleCooldownTick)
+		{
+			m_InvisibleCooldownTick--;
+			if(Server()->Tick() % 2 == 0)
+			{
+				int Seconds = m_InvisibleCooldownTick / Server()->TickSpeed();
+				int MiliSeconds = ((float)m_InvisibleCooldownTick / (float)Server()->TickSpeed() - m_InvisibleCooldownTick / Server()->TickSpeed()) * 100;
+
+				char aBuf[64];
+				str_format(aBuf, sizeof(aBuf), "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nInvisibility cooldown: %d.%d", Seconds, MiliSeconds);
+				GameServer()->SendBroadcast(aBuf, GetPlayer()->GetCID());
+			}
+		}
+		else
+		{
+			if(Server()->Tick() % 2 == 0)
+			{
+				GameServer()->SendBroadcast("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nInvisibility available", GetPlayer()->GetCID());
+			}
+		}
+	}
+
+	// Zombie Statuses
+	if(GetPlayer()->GetTeam() == TEAM_RED)
+	{
+		if(Server()->Tick() % 2 == 0)
+		{
+			char aBuf[64];
+			str_format(aBuf, sizeof(aBuf), "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nHealth: %d | Armor: %d", m_Health, m_Armor);
+			GameServer()->SendBroadcast(aBuf, GetPlayer()->GetCID());
+		}
+	}
 }
 
 void CCharacter::TickDefered()
@@ -884,7 +1034,7 @@ bool CCharacter::IncreaseArmor(int Amount)
 	return true;
 }
 
-void CCharacter::Die(int Killer, int Weapon)
+void CCharacter::Die(int Killer, int Weapon, bool Respawn)
 {
 	if(Server()->IsRecording(m_pPlayer->GetCID()))
 		Server()->StopRecord(m_pPlayer->GetCID());
@@ -912,64 +1062,52 @@ void CCharacter::Die(int Killer, int Weapon)
 	m_pPlayer->m_PreviousDieTick = m_pPlayer->m_DieTick;
 	m_pPlayer->m_DieTick = Server()->Tick();
 
-	m_Alive = false;
-	m_Solo = false;
+	if(Respawn)
+	{
+		m_Alive = false;
+		m_Solo = false;
 
-	GameServer()->m_World.RemoveEntity(this);
-	GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = 0;
+		GameServer()->m_World.RemoveEntity(this);
+		GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = 0;
+		Teams()->OnCharacterDeath(GetPlayer()->GetCID(), Weapon);
+	}
+
 	GameServer()->CreateDeath(m_Pos, m_pPlayer->GetCID(), Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
-	Teams()->OnCharacterDeath(GetPlayer()->GetCID(), Weapon);
 }
 
 bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 {
-	/*m_Core.m_Vel += Force;
-
-	if(GameServer()->m_pController->IsFriendlyFire(m_pPlayer->GetCID(), From) && !g_Config.m_SvTeamdamage)
+	// remove friendly fire
+	if(From >= 0 && GameServer()->m_pController->IsFriendlyFire(m_pPlayer->GetCID(), From))
 		return false;
 
-	// m_pPlayer only inflicts half damage on self
-	if(From == m_pPlayer->GetCID())
-		Dmg = maximum(1, Dmg/2);
+	// remove self damage
+	if(From == GetPlayer()->GetCID())
+	{
+		if(g_Config.m_PanicGrenadeJumpHuman)
+			m_Core.m_Vel += Force;
+
+		return false;
+	}
+
+	m_Core.m_Vel += Force;
 
 	m_DamageTaken++;
 
 	// create healthmod indicator
-	if(Server()->Tick() < m_DamageTakenTick+25)
+	if(Server()->Tick() < m_DamageTakenTick + 25)
 	{
 		// make sure that the damage indicators doesn't group together
-		GameServer()->CreateDamageInd(m_Pos, m_DamageTaken*0.25f, Dmg);
+		GameServer()->CreateDamageInd(m_Pos, m_DamageTaken * 0.25f, (Dmg > 50) ? 25 : Dmg);
 	}
 	else
 	{
 		m_DamageTaken = 0;
-		GameServer()->CreateDamageInd(m_Pos, 0, Dmg);
+		GameServer()->CreateDamageInd(m_Pos, 0, (Dmg > 50) ? 25 : Dmg);
 	}
 
 	if(Dmg)
-	{
-		if(m_Armor)
-		{
-			if(Dmg > 1)
-			{
-				m_Health--;
-				Dmg--;
-			}
-
-			if(Dmg > m_Armor)
-			{
-				Dmg -= m_Armor;
-				m_Armor = 0;
-			}
-			else
-			{
-				m_Armor -= Dmg;
-				Dmg = 0;
-			}
-		}
-
 		m_Health -= Dmg;
-	}
 
 	m_DamageTakenTick = Server()->Tick();
 
@@ -988,15 +1126,22 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 	// check for death
 	if(m_Health <= 0)
 	{
-		Die(From, Weapon);
+		// if team blue dies, it will remain on the same position
+		Die(From, Weapon, (GetPlayer()->GetTeam() == TEAM_BLUE) ? false : true);
+
+		// add score to the attacker, if attacker is zombie is 2, if not is 1
+		if(From >= 0 && GameServer()->m_apPlayers[From])
+		{
+			GameServer()->m_apPlayers[From]->m_Score += (GameServer()->m_apPlayers[From]->GetTeam() == TEAM_RED) ? 2 : 1;
+		}
 
 		// set attacker's face to happy (taunt!)
-		if (From >= 0 && From != m_pPlayer->GetCID() && GameServer()->m_apPlayers[From])
+		if(From >= 0 && From != m_pPlayer->GetCID() && GameServer()->m_apPlayers[From])
 		{
 			CCharacter *pChr = GameServer()->m_apPlayers[From]->GetCharacter();
-			if (pChr)
+			if(pChr)
 			{
-				pChr->m_EmoteType = EMOTE_HAPPY;
+				pChr->m_EmoteType = EMOTE_ANGRY;
 				pChr->m_EmoteStop = Server()->Tick() + Server()->TickSpeed();
 			}
 		}
@@ -1004,10 +1149,10 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 		return false;
 	}
 
-	if (Dmg > 2)
+	if(Dmg > 2)
 		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_LONG);
 	else
-		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_SHORT);*/
+		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_SHORT);
 
 	if(Dmg)
 	{
@@ -1183,6 +1328,24 @@ void CCharacter::Snap(int SnappingClient)
 
 	if(NetworkClipped(SnappingClient) || !CanSnapCharacter(SnappingClient))
 		return;
+
+	// ZombPanic
+	if(m_InvisibleTick || m_IsInInvisibleTile)
+	{
+		if(GetPlayer()->GetCID() != SnappingClient)
+		{
+			return;
+		}
+
+		CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_InvisibleShieldID, sizeof(CNetObj_Pickup)));
+		if(!pP)
+			return;
+
+		pP->m_X = (int)m_Pos.x;
+		pP->m_Y = (int)m_Pos.y - 60.0;
+		pP->m_Type = POWERUP_ARMOR;
+		pP->m_Subtype = 0;
+	}
 
 	SnapCharacter(SnappingClient, ID);
 
@@ -1475,8 +1638,17 @@ void CCharacter::HandleTiles(int Index)
 	// freeze
 	if(((m_TileIndex == TILE_FREEZE) || (m_TileFIndex == TILE_FREEZE)) && !m_Super && !m_DeepFreeze)
 		Freeze();
-	else if(((m_TileIndex == TILE_UNFREEZE) || (m_TileFIndex == TILE_UNFREEZE)) && !m_DeepFreeze)
+
+	// ZombPanic
+	if(((m_TileIndex == TILE_UNFREEZE) || (m_TileFIndex == TILE_UNFREEZE)) && !m_DeepFreeze)
+	{
 		UnFreeze();
+
+		if(!m_IsInInvisibleTile)
+		{
+			m_IsInInvisibleTile = true;
+		}
+	}
 
 	// deep freeze
 	if(((m_TileIndex == TILE_DFREEZE) || (m_TileFIndex == TILE_DFREEZE)) && !m_Super && !m_DeepFreeze)
@@ -1871,114 +2043,139 @@ void CCharacter::HandleTiles(int Index)
 		m_LastBonus = false;
 	}
 
-	int z = GameServer()->Collision()->IsTeleport(MapIndex);
-	if(!g_Config.m_SvOldTeleportHook && !g_Config.m_SvOldTeleportWeapons && z && !(*m_pTeleOuts)[z - 1].empty())
+	// ZombPanic Start - Walls
+
+	// TELEPORT = BLUE
+	// int z = GameServer()->Collision()->IsTeleport(MapIndex);
+	// if(!g_Config.m_SvOldTeleportHook && !g_Config.m_SvOldTeleportWeapons && z && !(*m_pTeleOuts)[z - 1].empty())
+	// {
+	// 	if(m_Super)
+	// 		return;
+
+	// 	int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleOuts)[z - 1].size());
+	// 	m_Core.m_Pos = (*m_pTeleOuts)[z - 1][TeleOut];
+	// 	if(!g_Config.m_SvTeleportHoldHook)
+	// 	{
+	// 		ResetHook();
+	// 	}
+	// 	if(g_Config.m_SvTeleportLoseWeapons)
+	// 		ResetPickups();
+	// 	return;
+	// }
+
+	// EVIL TELEPORT = RED
+	// int evilz = GameServer()->Collision()->IsEvilTeleport(MapIndex);
+	// if(evilz && !(*m_pTeleOuts)[evilz - 1].empty())
+	// {
+	// 	if(m_Super)
+	// 		return;
+
+	// 	int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleOuts)[evilz - 1].size());
+	// 	m_Core.m_Pos = (*m_pTeleOuts)[evilz - 1][TeleOut];
+	// 	if(!g_Config.m_SvOldTeleportHook && !g_Config.m_SvOldTeleportWeapons)
+	// 	{
+	// 		m_Core.m_Vel = vec2(0, 0);
+
+	// 		if(!g_Config.m_SvTeleportHoldHook)
+	// 		{
+	// 			ResetHook();
+	// 			GameWorld()->ReleaseHooked(GetPlayer()->GetCID());
+	// 		}
+	// 		if(g_Config.m_SvTeleportLoseWeapons)
+	// 		{
+	// 			ResetPickups();
+	// 		}
+	// 	}
+	// 	return;
+	// }
+
+	int Number = GameServer()->Collision()->TeleLayer()[MapIndex].m_Number;
+	int Type = GameServer()->Collision()->TeleLayer()[MapIndex].m_Type;
+
+	if(Number > 0 && Type == TILE_TELEOUT)
 	{
-		if(m_Super)
-			return;
-		int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleOuts)[z - 1].size());
-		m_Core.m_Pos = (*m_pTeleOuts)[z - 1][TeleOut];
-		if(!g_Config.m_SvTeleportHoldHook)
+		// TRY TO TRIGGER ZOMBIE DOOR AND DOOR AT THE SAME TIME
+		// SINCE (TO-1) STANDS FOR (FROM-1) AND (FROM EVIL-1)
+		if(m_pPlayer->GetTeam() == TEAM_BLUE)
 		{
-			ResetHook();
+			GameServer()->m_pController->OnZombieDoorHoldPoint(Number + (MAX_DOORS / 2));
 		}
-		if(g_Config.m_SvTeleportLoseWeapons)
-			ResetPickups();
-		return;
+
+		GameServer()->m_pController->OnDoorHoldPoint(Number);
 	}
-	int evilz = GameServer()->Collision()->IsEvilTeleport(MapIndex);
-	if(evilz && !(*m_pTeleOuts)[evilz - 1].empty())
-	{
-		if(m_Super)
-			return;
-		int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleOuts)[evilz - 1].size());
-		m_Core.m_Pos = (*m_pTeleOuts)[evilz - 1][TeleOut];
-		if(!g_Config.m_SvOldTeleportHook && !g_Config.m_SvOldTeleportWeapons)
-		{
-			m_Core.m_Vel = vec2(0, 0);
 
-			if(!g_Config.m_SvTeleportHoldHook)
-			{
-				ResetHook();
-				GameWorld()->ReleaseHooked(GetPlayer()->GetCID());
-			}
-			if(g_Config.m_SvTeleportLoseWeapons)
-			{
-				ResetPickups();
-			}
-		}
-		return;
-	}
-	if(GameServer()->Collision()->IsCheckEvilTeleport(MapIndex))
-	{
-		if(m_Super)
-			return;
-		// first check if there is a TeleCheckOut for the current recorded checkpoint, if not check previous checkpoints
-		for(int k = m_TeleCheckpoint - 1; k >= 0; k--)
-		{
-			if(!(*m_pTeleCheckOuts)[k].empty())
-			{
-				int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleCheckOuts)[k].size());
-				m_Core.m_Pos = (*m_pTeleCheckOuts)[k][TeleOut];
-				m_Core.m_Vel = vec2(0, 0);
+	// if(GameServer()->Collision()->IsCheckEvilTeleport(MapIndex))
+	// {
+	// 	if(m_Super)
+	// 		return;
+	// 	// first check if there is a TeleCheckOut for the current recorded checkpoint, if not check previous checkpoints
+	// 	for(int k = m_TeleCheckpoint - 1; k >= 0; k--)
+	// 	{
+	// 		if(!(*m_pTeleCheckOuts)[k].empty())
+	// 		{
+	// 			int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleCheckOuts)[k].size());
+	// 			m_Core.m_Pos = (*m_pTeleCheckOuts)[k][TeleOut];
+	// 			m_Core.m_Vel = vec2(0, 0);
 
-				if(!g_Config.m_SvTeleportHoldHook)
-				{
-					ResetHook();
-					GameWorld()->ReleaseHooked(GetPlayer()->GetCID());
-				}
+	// 			if(!g_Config.m_SvTeleportHoldHook)
+	// 			{
+	// 				ResetHook();
+	// 				GameWorld()->ReleaseHooked(GetPlayer()->GetCID());
+	// 			}
 
-				return;
-			}
-		}
-		// if no checkpointout have been found (or if there no recorded checkpoint), teleport to start
-		vec2 SpawnPos;
-		if(GameServer()->m_pController->CanSpawn(m_pPlayer->GetTeam(), &SpawnPos, GameServer()->GetDDRaceTeam(GetPlayer()->GetCID())))
-		{
-			m_Core.m_Pos = SpawnPos;
-			m_Core.m_Vel = vec2(0, 0);
+	// 			return;
+	// 		}
+	// 	}
+	// 	// if no checkpointout have been found (or if there no recorded checkpoint), teleport to start
+	// 	vec2 SpawnPos;
+	// 	if(GameServer()->m_pController->CanSpawn(m_pPlayer->GetTeam(), &SpawnPos, GameServer()->GetDDRaceTeam(GetPlayer()->GetCID())))
+	// 	{
+	// 		m_Core.m_Pos = SpawnPos;
+	// 		m_Core.m_Vel = vec2(0, 0);
 
-			if(!g_Config.m_SvTeleportHoldHook)
-			{
-				ResetHook();
-				GameWorld()->ReleaseHooked(GetPlayer()->GetCID());
-			}
-		}
-		return;
-	}
-	if(GameServer()->Collision()->IsCheckTeleport(MapIndex))
-	{
-		if(m_Super)
-			return;
-		// first check if there is a TeleCheckOut for the current recorded checkpoint, if not check previous checkpoints
-		for(int k = m_TeleCheckpoint - 1; k >= 0; k--)
-		{
-			if(!(*m_pTeleCheckOuts)[k].empty())
-			{
-				int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleCheckOuts)[k].size());
-				m_Core.m_Pos = (*m_pTeleCheckOuts)[k][TeleOut];
+	// 		if(!g_Config.m_SvTeleportHoldHook)
+	// 		{
+	// 			ResetHook();
+	// 			GameWorld()->ReleaseHooked(GetPlayer()->GetCID());
+	// 		}
+	// 	}
+	// 	return;
+	// }
+	// if(GameServer()->Collision()->IsCheckTeleport(MapIndex))
+	// {
+	// 	if(m_Super)
+	// 		return;
+	// 	// first check if there is a TeleCheckOut for the current recorded checkpoint, if not check previous checkpoints
+	// 	for(int k = m_TeleCheckpoint - 1; k >= 0; k--)
+	// 	{
+	// 		if(!(*m_pTeleCheckOuts)[k].empty())
+	// 		{
+	// 			int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleCheckOuts)[k].size());
+	// 			m_Core.m_Pos = (*m_pTeleCheckOuts)[k][TeleOut];
 
-				if(!g_Config.m_SvTeleportHoldHook)
-				{
-					ResetHook();
-				}
+	// 			if(!g_Config.m_SvTeleportHoldHook)
+	// 			{
+	// 				ResetHook();
+	// 			}
 
-				return;
-			}
-		}
-		// if no checkpointout have been found (or if there no recorded checkpoint), teleport to start
-		vec2 SpawnPos;
-		if(GameServer()->m_pController->CanSpawn(m_pPlayer->GetTeam(), &SpawnPos, GameServer()->GetDDRaceTeam(GetPlayer()->GetCID())))
-		{
-			m_Core.m_Pos = SpawnPos;
+	// 			return;
+	// 		}
+	// 	}
+	// 	// if no checkpointout have been found (or if there no recorded checkpoint), teleport to start
+	// 	vec2 SpawnPos;
+	// 	if(GameServer()->m_pController->CanSpawn(m_pPlayer->GetTeam(), &SpawnPos, GameServer()->GetDDRaceTeam(GetPlayer()->GetCID())))
+	// 	{
+	// 		m_Core.m_Pos = SpawnPos;
 
-			if(!g_Config.m_SvTeleportHoldHook)
-			{
-				ResetHook();
-			}
-		}
-		return;
-	}
+	// 		if(!g_Config.m_SvTeleportHoldHook)
+	// 		{
+	// 			ResetHook();
+	// 		}
+	// 	}
+	// 	return;
+	// }
+
+	// ZombPanic Finish - Walls
 }
 
 void CCharacter::HandleTuneLayer()
@@ -2054,7 +2251,7 @@ void CCharacter::SetRescue()
 void CCharacter::DDRaceTick()
 {
 	mem_copy(&m_Input, &m_SavedInput, sizeof(m_Input));
-	m_Armor = (m_FreezeTime >= 0) ? m_MaxArmor - (m_FreezeTime / 15) : 0;
+	// m_Armor = (m_FreezeTime >= 0) ? m_MaxArmor - (m_FreezeTime / 15) : 0;
 	if(m_Input.m_Direction != 0 || m_Input.m_Jump != 0)
 		m_LastMove = Server()->Tick();
 
@@ -2154,6 +2351,12 @@ void CCharacter::DDRacePostCoreTick()
 	}
 	else
 	{
+		// ZombPanic
+		if(m_IsInInvisibleTile)
+		{
+			m_IsInInvisibleTile = false;
+		}
+
 		HandleTiles(CurrentIndex);
 		if(!m_Alive)
 			return;
@@ -2181,7 +2384,7 @@ bool CCharacter::Freeze(int Seconds)
 		return false;
 	if(m_FreezeTick < Server()->Tick() - Server()->TickSpeed() || Seconds == -1)
 	{
-		m_Armor = 0;
+		// m_Armor = 0;
 		m_FreezeTime = Seconds == -1 ? Seconds : Seconds * Server()->TickSpeed();
 		m_FreezeTick = Server()->Tick();
 		return true;
@@ -2198,7 +2401,7 @@ bool CCharacter::UnFreeze()
 {
 	if(m_FreezeTime > 0)
 	{
-		m_Armor = m_MaxArmor;
+		// m_Armor = m_MaxArmor;
 		if(!m_aWeapons[m_Core.m_ActiveWeapon].m_Got)
 			m_Core.m_ActiveWeapon = WEAPON_GUN;
 		m_FreezeTime = 0;
@@ -2223,7 +2426,7 @@ void CCharacter::GiveWeapon(int Weapon, bool Remove, int Ammo)
 	if(Remove)
 	{
 		if(GetActiveWeapon() == Weapon)
-			SetActiveWeapon(WEAPON_GUN);
+			SetActiveWeapon(WEAPON_HAMMER);
 	}
 	else
 	{
@@ -2231,6 +2434,7 @@ void CCharacter::GiveWeapon(int Weapon, bool Remove, int Ammo)
 	}
 
 	m_aWeapons[Weapon].m_Got = !Remove;
+	m_aWeapons[Weapon].m_Ammo = Ammo;
 }
 
 void CCharacter::GiveAllWeapons()
@@ -2247,7 +2451,7 @@ void CCharacter::ResetPickups()
 	{
 		m_aWeapons[i].m_Got = false;
 		if(m_Core.m_ActiveWeapon == i)
-			m_Core.m_ActiveWeapon = WEAPON_GUN;
+			m_Core.m_ActiveWeapon = (GetPlayer()->GetTeam() == TEAM_RED) ? WEAPON_HAMMER : WEAPON_GUN;
 	}
 }
 
@@ -2359,4 +2563,69 @@ void CCharacter::Rescue()
 int64_t CCharacter::TeamMask()
 {
 	return Teams()->TeamMask(Team(), -1, GetPlayer()->GetCID());
+}
+
+vec2 CCharacter::GetVec2LastestInput()
+{
+	return normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
+}
+
+void CCharacter::SetAutoHealthLimit()
+{
+	m_MaxHealth = (GetPlayer()->GetTeam() == TEAM_RED) ? g_Config.m_PanicZombieInitialLife : 1;
+}
+
+void CCharacter::SetTurret()
+{
+	if(m_TurretActive[m_Core.m_ActiveWeapon])
+		return;
+
+	int ClientID = GetPlayer()->GetCID();
+
+	switch(m_Core.m_ActiveWeapon)
+	{
+	case WEAPON_HAMMER:
+		new CTurret(GameWorld(), m_Pos, ClientID, WEAPON_HAMMER);
+		break;
+
+	case WEAPON_GUN:
+		new CTurret(GameWorld(), m_Pos, ClientID, WEAPON_GUN);
+		break;
+
+	case WEAPON_SHOTGUN:
+		new CTurret(GameWorld(), m_Pos, ClientID, WEAPON_SHOTGUN);
+		break;
+
+	case WEAPON_LASER:
+	case WEAPON_GRENADE:
+		if(m_TurretFirstPos != vec2(0, 0))
+		{
+			if(GameServer()->Collision()->IntersectLine(m_TurretFirstPos, m_Pos, &m_Pos, 0))
+			{
+				GameServer()->SendChatTarget(ClientID, "Turret can't be placed between your points.");
+				m_TurretFirstPos = vec2(0, 0);
+				return;
+			}
+
+			if(distance(m_TurretFirstPos, m_Pos) < 50)
+			{
+				GameServer()->SendChatTarget(ClientID, "This distance is too small. Please create a bigger turret.");
+				m_TurretFirstPos = vec2(0, 0);
+				return;
+			}
+
+			vec2 SecondSpot = m_Pos;
+			if(length(SecondSpot - m_TurretFirstPos) > 360)
+			{
+				vec2 Dir = normalize(m_Pos - m_TurretFirstPos);
+				SecondSpot = m_TurretFirstPos + Dir * 360;
+			}
+
+			new CTurret(GameWorld(), m_TurretFirstPos, ClientID, m_Core.m_ActiveWeapon, SecondSpot);
+			m_TurretFirstPos = vec2(0, 0);
+		}
+		else
+			m_TurretFirstPos = m_Pos;
+		break;
+	}
 }

@@ -6,6 +6,8 @@
 #include <base/vmath.h>
 #include <engine/map.h>
 
+#include "entities/panicdoor.h"
+
 /*
 	Class: Game Controller
 		Controls the main game logic. Keeping track of team and player score,
@@ -170,6 +172,33 @@ public:
 	void GetMapRotationInfo(CMapRotationInfo *pMapRotationInfo);
 	void CycleMap();
 	void SkipMap();
+
+	// ZombPanic
+	int m_LastWarmup;
+	bool m_WarmupKilled;
+	int m_LastZombie, m_LastZombie2;
+
+	int NumPlayers();
+	int NumZombies();
+	int NumHumans();
+	void ResetZombies();
+	void RandomZombie();
+
+	struct CPanicDoorController
+	{
+		int m_State;
+		int m_Tick;
+		int m_OpenTime;
+		int m_CloseTime;
+		int m_ReopenTime;
+	} m_Door[MAX_DOORS];
+
+	virtual void OnDoorHoldPoint(int Index);
+	virtual void OnZombieDoorHoldPoint(int Index);
+	virtual void ResetDoors();
+	virtual int DoorState(int Index);
+	virtual void SetDoorState(int Index, int State);
+	virtual int GetDoorTime(int Index);
 };
 
 #endif

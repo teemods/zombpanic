@@ -28,13 +28,13 @@ MACRO_TUNING_PARAM(GunSpeed, gun_speed, 2200.0f, "Gun speed")
 MACRO_TUNING_PARAM(GunLifetime, gun_lifetime, 2.0f, "Gun lifetime")
 
 MACRO_TUNING_PARAM(ShotgunCurvature, shotgun_curvature, 1.25f, "Shotgun curvature")
-MACRO_TUNING_PARAM(ShotgunSpeed, shotgun_speed, 2750.0f, "Shotgun speed")
+MACRO_TUNING_PARAM(ShotgunSpeed, shotgun_speed, 200.0f, "Shotgun speed")
 MACRO_TUNING_PARAM(ShotgunSpeeddiff, shotgun_speeddiff, 0.8f, "(UNUSED) Speed difference between shotgun bullets")
 MACRO_TUNING_PARAM(ShotgunLifetime, shotgun_lifetime, 0.20f, "(UNUSED) Shotgun lifetime")
 
 MACRO_TUNING_PARAM(GrenadeCurvature, grenade_curvature, 7.0f, "Grenade curvature")
-MACRO_TUNING_PARAM(GrenadeSpeed, grenade_speed, 1000.0f, "Grenade speed")
-MACRO_TUNING_PARAM(GrenadeLifetime, grenade_lifetime, 2.0f, "Grenade lifetime")
+MACRO_TUNING_PARAM(GrenadeSpeed, grenade_speed, 0.01f, "Grenade speed")
+MACRO_TUNING_PARAM(GrenadeLifetime, grenade_lifetime, 120.0f, "Grenade lifetime")
 
 MACRO_TUNING_PARAM(LaserReach, laser_reach, 800.0f, "How long the laser can reach")
 MACRO_TUNING_PARAM(LaserBounceDelay, laser_bounce_delay, 150, "When bouncing, stop the laser this long")
