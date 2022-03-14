@@ -60,7 +60,7 @@ public:
 	void ResetInput();
 	void FireWeapon();
 
-	void Die(int Killer, int Weapon);
+	void Die(int Killer, int Weapon, bool Respawn = true);
 	bool TakeDamage(vec2 Force, int Dmg, int From, int Weapon);
 
 	bool Spawn(class CPlayer *pPlayer, vec2 Pos);
@@ -83,6 +83,11 @@ public:
 	bool IsPaused() const { return m_Paused; }
 	class CPlayer *GetPlayer() { return m_pPlayer; }
 	int64_t TeamMask();
+
+	// ZombPanic
+	vec2 GetVec2LastestInput();
+	void SetAutoHealthLimit();
+	void SetTurret();
 
 private:
 	// player controlling this character
@@ -249,6 +254,23 @@ public:
 	// DDNet-Skeleton
 	int m_MaxHealth;
 	int m_MaxArmor;
+
+	// ZombPanic
+	vec2 m_RiflePos;
+	vec2 m_TurretFirstPos;
+	bool m_TurretActive[5];
+
+	// Hammer Invisible
+	int m_InvisibleTick;
+	int m_InvisibleCooldownTick;
+
+	// Tile Invisible
+	int m_IsInInvisibleTile;
+
+	int m_InvisibleShieldID;
+
+	bool m_HittingDoor;
+	vec2 m_PushDirection;
 
 	// Setters/Getters because i don't want to modify vanilla vars access modifiers
 	int GetLastWeapon() { return m_LastWeapon; }
