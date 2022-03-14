@@ -711,9 +711,6 @@ void IGameController::Tick()
 	if(GameServer()->m_World.m_Paused)
 		++m_RoundStartTick;
 
-	if(m_Warmup || GameServer()->m_World.m_Paused)
-		return;
-
 	DoWinCheck();
 
 	DoActivityCheck();
@@ -1005,6 +1002,12 @@ bool IGameController::IsFriendlyFire(int ClientID1, int ClientID2)
 bool IGameController::IsTeamplay()
 {
 	return m_GameFlags & GAMEFLAG_TEAMS;
+}
+
+void IGameController::DoWinCheck()
+{
+	if(g_Config.m_SvTimeLimit > 0 && (Server()->Tick() - m_RoundStartTick) >= g_Config.m_SvTimeLimit * Server()->TickSpeed() * 60)
+		EndRound();
 }
 
 void IGameController::QueueMap(const char *pToMap)

@@ -157,6 +157,7 @@ public:
 	char m_aPreviousMap[MAX_MAP_LENGTH];
 
 	bool IsTeamplay();
+	void DoWinCheck();
 
 	struct CMapRotationInfo
 	{

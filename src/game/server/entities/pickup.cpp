@@ -5,6 +5,7 @@
 #include <game/server/gamecontext.h>
 #include <game/server/player.h>
 
+#include <game/generated/server_data.h>
 #include <game/server/teams.h>
 #include <game/version.h>
 
@@ -26,7 +27,7 @@ CPickup::CPickup(CGameWorld *pGameWorld, int Type, int SubType, int Layer, int N
 
 void CPickup::Reset()
 {
-	if(GetPickUpRespawnDelay(m_Type) > 0)
+	if(g_pData->m_aPickups[m_Type].m_Spawndelay > 0)
 		m_SpawnTick = Server()->Tick() + Server()->TickSpeed() * GetPickUpRespawnDelay(m_Type);
 	else
 		m_SpawnTick = -1;
@@ -87,7 +88,7 @@ void CPickup::Tick()
 				{
 					pChr->GiveWeapon(m_Subtype, false, MaximumAmmo);
 
-					RespawnTime = GetPickUpRespawnTime(m_Type);
+					RespawnTime = g_pData->m_aPickups[m_Type].m_Respawntime;
 
 					if(m_Subtype == WEAPON_GRENADE)
 						GameServer()->CreateSound(m_Pos, SOUND_PICKUP_GRENADE, pChr->TeamMask());
@@ -105,7 +106,8 @@ void CPickup::Tick()
 			{
 				// activate ninja on target player
 				pChr->GiveNinja();
-				RespawnTime = GetPickUpRespawnTime(m_Type);
+
+				RespawnTime = g_pData->m_aPickups[m_Type].m_Respawntime;
 
 				// loop through all players, setting their emotes
 				CCharacter *pC = static_cast<CCharacter *>(GameServer()->m_World.FindFirst(CGameWorld::ENTTYPE_CHARACTER));
@@ -198,38 +200,4 @@ void CPickup::Move()
 		}
 		m_Pos += m_Core;
 	}
-}
-
-// DDNet-Skeleton
-// 0 = health, 1 = armor, 2 = weapon, 3 = ninja
-int CPickup::GetPickUpRespawnTime(int Type)
-{
-	if(Type == 0)
-	{
-		return 15;
-	}
-	if(Type == 1)
-	{
-		return 15;
-	}
-	if(Type == 2)
-	{
-		return 15;
-	}
-	if(Type == 3)
-	{
-		return 15;
-	}
-
-	return 0;
-}
-
-int CPickup::GetPickUpRespawnDelay(int Type)
-{
-	if(Type == 3)
-	{
-		return 90;
-	}
-
-	return 0;
 }
