@@ -506,7 +506,7 @@ void IGameController::EndRound()
 	// HUMANS WIN
 	if(
 		!NumZombies() ||
-		(NumHumans() && (g_Config.m_SvTimelimit > 0 && (Server()->Tick() - m_RoundStartTick) >= g_Config.m_SvTimelimit * Server()->TickSpeed()) && !m_SuddenDeath))
+		(NumHumans() && (g_Config.m_SvTimeLimit > 0 && (Server()->Tick() - m_RoundStartTick) >= g_Config.m_SvTimeLimit * Server()->TickSpeed()) && !m_SuddenDeath))
 	{
 		m_aTeamscore[TEAM_BLUE] = 999;
 
@@ -766,7 +766,7 @@ void IGameController::Snap(int SnappingClient)
 	pGameInfoObj->m_WarmupTimer = m_Warmup;
 
 	pGameInfoObj->m_ScoreLimit = 0;
-	pGameInfoObj->m_TimeLimit = g_Config.m_SvTimelimit;
+	pGameInfoObj->m_TimeLimit = g_Config.m_SvTimeLimit;
 
 	pGameInfoObj->m_RoundNum = (str_length(g_Config.m_SvMapRotation) && g_Config.m_SvRoundsPerMap) ? g_Config.m_SvRoundsPerMap : 0;
 	pGameInfoObj->m_RoundCurrent = m_RoundCount + 1;
@@ -1013,7 +1013,7 @@ void IGameController::QueueMap(const char *pToMap)
 
 bool IGameController::IsWordSeparator(char c)
 {
-	return c == ';' || c == ' ' || c == ',' || c == '\t';
+	return c == ';' || c == ',' || c == '\t';
 }
 
 void IGameController::GetWordFromList(char *pNextWord, const char *pList, int ListIndex)
@@ -1156,7 +1156,7 @@ void IGameController::CycleMap()
 
 	char aBufMsg[256];
 	str_format(aBufMsg, sizeof(aBufMsg), "rotating map to %s", aBuf);
-	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
+	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBufMsg);
 	ChangeMap(aBuf);
 }
 
@@ -1234,13 +1234,13 @@ void IGameController::DoWinCheck()
 	if(!NumHumans() || !NumZombies())
 		EndRound();
 
-	if(g_Config.m_SvTimelimit > 0 && (Server()->Tick() - m_RoundStartTick) >= g_Config.m_SvTimelimit * Server()->TickSpeed() * 60)
+	if(g_Config.m_SvTimeLimit > 0 && (Server()->Tick() - m_RoundStartTick) >= g_Config.m_SvTimeLimit * Server()->TickSpeed() * 60)
 		EndRound();
 }
 
 void IGameController::OnDoorHoldPoint(int Index)
 {
-	if(m_Door[Index].m_Tick || !(m_Door[Index].m_State == DOOR_CLOSED) || m_Warmup || GetDoorTime(Index) == -1)
+	if(m_Door[Index].m_Tick || !(m_Door[Index].m_State == DOOR_CLOSED) || NumPlayers() < 2 || GetDoorTime(Index) == -1)
 		return;
 
 	int const doorTime = GetDoorTime(Index);
@@ -1254,7 +1254,7 @@ void IGameController::OnDoorHoldPoint(int Index)
 
 void IGameController::OnZombieDoorHoldPoint(int Index)
 {
-	if(m_Door[Index].m_State > DOOR_ZOMBIE_OPEN || m_Warmup || GetDoorTime(Index) == -1)
+	if(m_Door[Index].m_State > DOOR_ZOMBIE_OPEN || NumPlayers() < 2 || GetDoorTime(Index) == -1)
 		return;
 
 	SetDoorState(Index, DOOR_ZOMBIE_CLOSING);

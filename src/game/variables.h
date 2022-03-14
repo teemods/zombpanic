@@ -206,19 +206,18 @@ MACRO_CONFIG_INT(DbgTuning, dbg_tuning, 0, 0, 1, CFGFLAG_CLIENT, "")
 MACRO_CONFIG_INT(SvSelfKill, sv_self_kill, 0, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, "Whether players can kill him/her self")
 MACRO_CONFIG_INT(SvSpectable, sv_spectable, 0, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, "Whether players can specate in game or not")
 
+MACRO_CONFIG_INT(SvTimeLimit, sv_time_limit, 5, 1, 1000, CFGFLAG_SERVER, "Time limit in minutes (0 disables)")
 MACRO_CONFIG_STR(SvMapRotation, sv_map_rotation, 768, "", CFGFLAG_SERVER, "Maps to rotate between")
 MACRO_CONFIG_INT(SvMapRotationRandom, sv_map_rotation_random, 0, 0, 1, CFGFLAG_SERVER, "When enabled, next map in rotation will be chosen randomly")
-MACRO_CONFIG_INT(SvRoundsPerMap, sv_rounds_per_map, 1, 8, 100, CFGFLAG_SERVER, "Number of rounds on each map before rotating")
+MACRO_CONFIG_INT(SvRoundsPerMap, sv_rounds_per_map, 1, 1, 999, CFGFLAG_SERVER, "Number of rounds on each map before rotating")
 
 // ZombPanic
-MACRO_CONFIG_INT(SvTimelimit, sv_timelimit, 5, 3, 1000, CFGFLAG_SERVER, "Time limit in minutes (0 disables)")
-
 MACRO_CONFIG_INT(PanicGrenadeJumpHuman, panic_grenade_jump_human, 0, 0, 1, CFGFLAG_SERVER, "Grenade jump for human")
 MACRO_CONFIG_INT(PanicZombieRatio, panic_zombie_ratio, 8, 0, MAX_CLIENTS, CFGFLAG_SERVER, "Infection rate on start")
 MACRO_CONFIG_INT(PanicInvisibilityDuration, panic_invisibility_duration, 5, 1, 999, CFGFLAG_SERVER, "Duration of invisibility power (seconds)")
 MACRO_CONFIG_INT(PanicInvisibilityCooldown, panic_invisibility_cooldown, 30, 1, 999, CFGFLAG_SERVER, "Cooldown time of invisibility power (seconds)")
 
-MACRO_CONFIG_INT(PanicZombieInitialLife, panic_zombie_initial_life, 400, 0, 9999, CFGFLAG_SERVER, "Initial damage value for hammer player")
+MACRO_CONFIG_INT(PanicZombieInitialLife, panic_zombie_initial_life, 300, 0, 9999, CFGFLAG_SERVER, "Initial damage value for hammer player")
 
 MACRO_CONFIG_INT(PanicHammerPlayerInitialDamage, panic_hammer_initial_damage, 3, 0, 9999, CFGFLAG_SERVER, "Initial damage value for hammer player")
 MACRO_CONFIG_INT(PanicHammerTurretInitialDamage, panic_hammer_turret_initial_damage, 800, 0, 9999, CFGFLAG_SERVER, "Initial damage value for hammer turret")
