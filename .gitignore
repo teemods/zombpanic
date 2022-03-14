@@ -123,3 +123,5 @@ tags
 *.zip
 
 build/autoexec.cfg
+vgcore.*
+build/maps

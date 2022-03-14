@@ -343,7 +343,7 @@ void CPlayer::Snap(int SnappingClient)
 
 	int SnappingClientVersion = SnappingClient != SERVER_DEMO_CLIENT ? GameServer()->GetClientVersion(SnappingClient) : CLIENT_VERSIONNR;
 	int Latency = SnappingClient == SERVER_DEMO_CLIENT ? m_Latency.m_Min : GameServer()->m_apPlayers[SnappingClient]->m_aActLatency[m_ClientID];
-	int Score = abs(m_Score) * -1;
+	int Score = abs(m_Score);
 
 	// send 0 if times of others are not shown
 	if(SnappingClient != m_ClientID && g_Config.m_SvHideScore)
@@ -819,7 +819,7 @@ int CPlayer::Pause(int State, bool Force)
 	// DDNet-Skeleton
 	if(!g_Config.m_SvSpectable)
 	{
-		GameServer()->SendChatTarget(m_ClientID, "You cannot spectate in game.");
+		GameServer()->SendChatTarget(m_ClientID, "You can't spectate in game.");
 		return 0;
 	}
 
@@ -989,4 +989,28 @@ void CPlayer::ProcessScoreResult(CScorePlayerResult &Result)
 			break;
 		}
 	}
+}
+
+// ZombiePanic
+void CPlayer::SetZombie()
+{
+	m_Team = TEAM_RED;
+
+	GetCharacter()->GiveWeapon(WEAPON_GUN, true);
+	GetCharacter()->SetWeapon(WEAPON_HAMMER);
+	GetCharacter()->ResetPickups();
+
+	GetCharacter()->SetArmor(0);
+
+	GetCharacter()->SetAutoHealthLimit();
+	GetCharacter()->IncreaseHealth(9999);
+}
+
+void CPlayer::ResetZombie()
+{
+	if(m_Team == TEAM_SPECTATORS)
+		return;
+
+	m_Team = TEAM_BLUE;
+	// m_KillingSpree = m_JumpsShop = m_RangeShop = 0;
 }

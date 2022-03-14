@@ -30,9 +30,12 @@ CScore *CGameControllerDDRace::Score()
 
 void CGameControllerDDRace::OnCharacterSpawn(CCharacter *pChr)
 {
-	IGameController::OnCharacterSpawn(pChr);
+	IGameController::OnCharacterSpawn(pChr); // default health
+
+	// DDrace
 	pChr->SetTeams(&m_Teams);
 	pChr->SetTeleports(&m_TeleOuts, &m_TeleCheckOuts);
+
 	m_Teams.OnCharacterSpawn(pChr->GetPlayer()->GetCID());
 }
 
@@ -122,11 +125,11 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 
 	// init the player
 	Score()->PlayerData(ClientID)->Reset();
-	pPlayer->m_Score = Score()->PlayerData(ClientID)->m_BestTime ? Score()->PlayerData(ClientID)->m_BestTime : -9999;
+	pPlayer->m_Score = 0;
 
 	// Can't set score here as LoadScore() is threaded, run it in
 	// LoadScoreThreaded() instead
-	Score()->LoadPlayerData(ClientID);
+	// Score()->LoadPlayerData(ClientID);
 
 	if(!Server()->ClientPrevIngame(ClientID))
 	{
@@ -134,7 +137,7 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 		str_format(aBuf, sizeof(aBuf), "'%s' entered and joined the %s", Server()->ClientName(ClientID), GetTeamName(pPlayer->GetTeam()));
 		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CGameContext::CHAT_SIX);
 
-		// DDNet-Skeleton
+		/// DDNet-Skeleton
 		GameServer()->SendChatTarget(ClientID, GAME_MOD_NAME " Version: " GAME_MOD_VERSION);
 		GameServer()->SendChatTarget(ClientID, "Say /info and make sure to read our /rules");
 	}
@@ -176,19 +179,22 @@ void CGameControllerDDRace::DoTeamChange(class CPlayer *pPlayer, int Team, bool 
 	if(Team == pPlayer->GetTeam())
 		return;
 
-	CCharacter *pCharacter = pPlayer->GetCharacter();
+	// CCharacter *pCharacter = pPlayer->GetCharacter();
 
-	if(Team == TEAM_SPECTATORS)
-	{
-		if(g_Config.m_SvTeam != SV_TEAM_FORCED_SOLO && pCharacter)
-		{
-			// Joining spectators should not kill a locked team, but should still
-			// check if the team finished by you leaving it.
-			int DDRTeam = pCharacter->Team();
-			m_Teams.SetForceCharacterTeam(pPlayer->GetCID(), TEAM_FLOCK);
-			m_Teams.CheckTeamFinished(DDRTeam);
-		}
-	}
+	if(pPlayer->GetTeam() == TEAM_RED && Team != TEAM_SPECTATORS)
+		return GameServer()->SendBroadcast("Zombies can't change team.", pPlayer->GetCID());
+
+	if(!m_Warmup && Team == TEAM_BLUE)
+		return GameServer()->SendBroadcast("You only can join the human team when round hasn't started.", pPlayer->GetCID());
+
+	if(Team == TEAM_RED && m_Warmup)
+		return GameServer()->SendBroadcast("Zombie will be chosen randomly.", pPlayer->GetCID());
+
+	if(pPlayer->GetTeam() == TEAM_BLUE && Team != TEAM_SPECTATORS && !m_Warmup)
+		return GameServer()->SendBroadcast("You can't join the zombie team.", pPlayer->GetCID());
+
+	if(pPlayer->GetTeam() == TEAM_RED && NumZombies() < 2 && !m_Warmup)
+		return GameServer()->SendBroadcast("You are the only zombie.", pPlayer->GetCID());
 
 	IGameController::DoTeamChange(pPlayer, Team, DoChatMsg);
 }
