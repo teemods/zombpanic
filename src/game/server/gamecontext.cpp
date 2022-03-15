@@ -3116,6 +3116,9 @@ void CGameContext::OnConsoleInit()
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 
 	// DDNet-Skeleton
+	Console()->Register("swap_teams", "", CFGFLAG_SERVER, ConSwapTeams, this, "Swap the current teams");
+	Console()->Register("shuffle_teams", "", CFGFLAG_SERVER, ConShuffleTeams, this, "Shuffle the current teams");
+
 	Console()->Register("skip_map", "", CFGFLAG_SERVER | CFGFLAG_STORE, ConSkipMap, this, "Change map to the next in the rotation");
 	Console()->Register("queue_map", "s", CFGFLAG_SERVER | CFGFLAG_STORE, ConQueueMap, this, "Set the next map");
 	Console()->Register("add_map", "s", CFGFLAG_SERVER | CFGFLAG_STORE, ConAddMap, this, "Add a map to the maps rotation list");
@@ -4246,6 +4249,68 @@ bool CGameContext::RateLimitPlayerMapVote(int ClientID)
 }
 
 // DDNet-Skeleton
+void CGameContext::ConSwapTeams(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if(!pSelf->m_pController->IsTeamplay())
+		return;
+
+	pSelf->SendChat(-1, CGameContext::CHAT_ALL, "Teams were swapped");
+
+	for(auto &m_apPlayer : pSelf->m_apPlayers)
+	{
+		if(m_apPlayer && m_apPlayer->GetTeam() != TEAM_SPECTATORS)
+			m_apPlayer->SetTeam(m_apPlayer->GetTeam() ^ 1, false);
+	}
+
+	(void)pSelf->m_pController->DoTeamBalancingCheck();
+}
+
+void CGameContext::ConShuffleTeams(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if(!pSelf->m_pController->IsTeamplay())
+		return;
+
+	int CounterRed = 0;
+	int CounterBlue = 0;
+	int PlayerTeam = 0;
+
+	for(auto &m_apPlayer : pSelf->m_apPlayers)
+		if(m_apPlayer && m_apPlayer->GetTeam() != TEAM_SPECTATORS)
+			++PlayerTeam;
+
+	PlayerTeam = (PlayerTeam + 1) / 2;
+
+	pSelf->SendChat(-1, CGameContext::CHAT_ALL, "Teams were shuffled");
+
+	for(auto &m_apPlayer : pSelf->m_apPlayers)
+	{
+		if(m_apPlayer && m_apPlayer->GetTeam() != TEAM_SPECTATORS)
+		{
+			if(CounterRed == PlayerTeam)
+				m_apPlayer->SetTeam(TEAM_BLUE, false);
+			else if(CounterBlue == PlayerTeam)
+				m_apPlayer->SetTeam(TEAM_RED, false);
+			else
+			{
+				if(rand() % 2)
+				{
+					m_apPlayer->SetTeam(TEAM_BLUE, false);
+					++CounterBlue;
+				}
+				else
+				{
+					m_apPlayer->SetTeam(TEAM_RED, false);
+					++CounterRed;
+				}
+			}
+		}
+	}
+
+	(void)pSelf->m_pController->DoTeamBalancingCheck();
+}
+
 bool CGameContext::MapExists(const char *pMapName)
 {
 	char aMapFilename[128];
