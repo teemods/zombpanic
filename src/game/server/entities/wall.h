@@ -25,8 +25,6 @@ private:
 	int m_Owner;
 	CCharacter *m_OwnerChar;
 	int m_ID2;
-	int m_ID3;
-	int m_LifeSpan;
 	int m_Time;
 	int ZombiesON;
 };

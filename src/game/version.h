@@ -12,7 +12,7 @@ extern const char *GIT_SHORTREV_HASH;
 #define GAME_NAME "DDNet"
 // DDNet-Skeleton
 #define GAME_MOD_NAME "ZombPanic"
-#define GAME_MOD_RELEASE_VERSION "1.0.1"
+#define GAME_MOD_RELEASE_VERSION "1.0.2"
 
 #define GAME_TYPE_NAME "ZombPanic"
 #define TEST_TYPE_NAME "TestZombPanic"

@@ -150,7 +150,7 @@ MACRO_CONFIG_INT(ClShowStartMenuImages, cl_show_start_menu_images, 1, 0, 1, CFGF
 MACRO_CONFIG_INT(ClSkipStartMenu, cl_skip_start_menu, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Skip the start menu")
 
 // server
-MACRO_CONFIG_INT(SvWarmup, sv_warmup, 12, 0, 30, CFGFLAG_SERVER, "Number of seconds to do warmup before round starts")
+MACRO_CONFIG_INT(SvWarmup, sv_warmup, 15, 0, 60, CFGFLAG_SERVER, "Number of seconds to do warmup before round starts")
 MACRO_CONFIG_STR(SvMotd, sv_motd, 900, "", CFGFLAG_SERVER, "Message of the day to display for the clients")
 MACRO_CONFIG_INT(SvTournamentMode, sv_tournament_mode, 0, 0, 1, CFGFLAG_SERVER, "Tournament mode. When enabled, players joins the server as spectator")
 MACRO_CONFIG_INT(SvSpamprotection, sv_spamprotection, 1, 0, 1, CFGFLAG_SERVER, "Spam protection")
@@ -206,7 +206,7 @@ MACRO_CONFIG_INT(DbgTuning, dbg_tuning, 0, 0, 1, CFGFLAG_CLIENT, "")
 MACRO_CONFIG_INT(SvSelfKill, sv_self_kill, 0, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, "Whether players can kill him/her self")
 MACRO_CONFIG_INT(SvSpectable, sv_spectable, 0, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, "Whether players can specate in game or not")
 
-MACRO_CONFIG_INT(SvTimeLimit, sv_time_limit, 5, 1, 1000, CFGFLAG_SERVER, "Time limit in minutes (0 disables)")
+MACRO_CONFIG_INT(SvTimeLimit, sv_time_limit, 6, 1, 1000, CFGFLAG_SERVER, "Time limit in minutes (0 disables)")
 MACRO_CONFIG_INT(SvScoreLimit, sv_score_limit, 0, 0, 0, CFGFLAG_SERVER, "Score limit (0 disables)")
 
 MACRO_CONFIG_STR(SvMapRotation, sv_map_rotation, 768, "", CFGFLAG_SERVER, "Maps to rotate between")

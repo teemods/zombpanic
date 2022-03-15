@@ -1193,42 +1193,48 @@ void IGameController::SkipMap()
 int IGameController::NumPlayers()
 {
 	int NumPlayers = 0;
-	for(int i = 0; i < MAX_CLIENTS; i++)
+
+	for(auto &m_apPlayer : GameServer()->m_apPlayers)
 	{
-		if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS)
+		if(m_apPlayer && m_apPlayer->GetTeam() != TEAM_SPECTATORS)
 			NumPlayers++;
 	}
+
 	return NumPlayers;
 }
 
 int IGameController::NumZombies()
 {
 	int NumZombies = 0;
-	for(int i = 0; i < MAX_CLIENTS; i++)
+
+	for(auto &m_apPlayer : GameServer()->m_apPlayers)
 	{
-		if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() == TEAM_RED)
+		if(m_apPlayer && m_apPlayer->GetTeam() == TEAM_RED)
 			NumZombies++;
 	}
+
 	return NumZombies;
 }
 
 int IGameController::NumHumans()
 {
 	int NumHumans = 0;
-	for(int i = 0; i < MAX_CLIENTS; i++)
+
+	for(auto &m_apPlayer : GameServer()->m_apPlayers)
 	{
-		if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() == TEAM_BLUE)
+		if(m_apPlayer && m_apPlayer->GetTeam() == TEAM_BLUE)
 			NumHumans++;
 	}
+
 	return NumHumans;
 }
 
 void IGameController::ResetZombies()
 {
-	for(int i = 0; i < MAX_CLIENTS; i++)
+	for(auto &m_apPlayer : GameServer()->m_apPlayers)
 	{
-		if(GameServer()->m_apPlayers[i])
-			GameServer()->m_apPlayers[i]->ResetZombie();
+		if(m_apPlayer)
+			m_apPlayer->ResetZombie();
 	}
 }
 

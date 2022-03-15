@@ -25,13 +25,11 @@ private:
 	int m_IDG;
 	int m_IDS;
 	int m_Ammo;
-	int m_Lifetime;
 	vec2 Direction;
 	vec2 SavePosion;
 	vec2 InitGrenadePos;
 	vec2 m_Pos2;
 	bool BackSpeed;
-	bool m_ExpTime;
 	int m_Type;
 	int m_ReloadTick;
 	int m_RegenerationTime;
