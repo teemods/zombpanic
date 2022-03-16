@@ -42,6 +42,7 @@ CCharacter::CCharacter(CGameWorld *pWorld) :
 	m_InvisibleShieldID = Server()->SnapNewID();
 	m_InvisibleTick = m_InvisibleCooldownTick = 0;
 	m_IsInInvisibleTile = false;
+	m_LastBroadcastMessage[0] = 0;
 }
 
 void CCharacter::Reset()
@@ -450,9 +451,10 @@ void CCharacter::FireWeapon()
 		}
 
 		// Human invisible system
+		// Only enable the system with at least 2 players
 		if(GetPlayer()->GetTeam() == TEAM_BLUE)
 		{
-			if(!m_InvisibleCooldownTick)
+			if(GameServer()->m_pController->NumPlayers() > 1 && !m_InvisibleCooldownTick)
 			{
 				GameServer()->CreatePlayerSpawn(m_Pos);
 
@@ -465,8 +467,16 @@ void CCharacter::FireWeapon()
 		{
 			CCharacter *pTarget = apEnts[i];
 
-			//if ((pTarget == this) || GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL))
-			if((pTarget == this || pTarget->m_InvisibleTick || (pTarget->IsAlive() && !CanCollide(pTarget->GetPlayer()->GetCID()))))
+			// no self damage
+			// cant hit invisible
+			// cant hit through walls
+			// alive & need to can collide
+			if(
+				pTarget == this || 
+				pTarget->m_InvisibleTick || 
+				GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL) || 
+				(pTarget->IsAlive() && !CanCollide(pTarget->GetPlayer()->GetCID()))
+			)
 				continue;
 
 			// set his velocity to fast upward (for now)
@@ -843,63 +853,64 @@ void CCharacter::Tick()
 	m_PrevPos = m_Core.m_Pos;
 
 	// ZombPanic
-
-	// Human statuses
-	if(GetPlayer()->GetTeam() == TEAM_BLUE)
+	if(GameServer()->m_pController->NumPlayers() > 1)
 	{
-		// Using this logic the countdown will start
-		// only after the invisibility effect finish
-		if(m_InvisibleTick)
+		// Human statuses
+		if(GetPlayer()->GetTeam() == TEAM_BLUE)
 		{
-			m_InvisibleTick--;
-
-			// Show invisible timer
-			if(Server()->Tick() % 2 == 0)
+			// Using this logic the countdown will start
+			// only after the invisibility effect finish
+			if(m_InvisibleTick)
 			{
+				m_InvisibleTick--;
+
+				// Player is back visible
+				if(!m_InvisibleTick && GetPlayer()->GetTeam() == TEAM_BLUE)
+				{
+					GameServer()->CreatePlayerSpawn(m_Pos);
+				}
+
+				// Show invisible timer
+
 				int Seconds = m_InvisibleTick / Server()->TickSpeed();
 				int MiliSeconds = ((float)m_InvisibleTick / (float)Server()->TickSpeed() - m_InvisibleTick / Server()->TickSpeed()) * 100;
 
 				char aBuf[64];
-				str_format(aBuf, sizeof(aBuf), "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nInvisible: %d.%d", Seconds, MiliSeconds);
-				GameServer()->SendBroadcast(aBuf, GetPlayer()->GetCID());
+				str_format(aBuf, sizeof(aBuf), "Invisible: %d.%d", Seconds, MiliSeconds);
+				SendPersonalBroadcast(aBuf);
 			}
+			else if(m_InvisibleCooldownTick)
+			{
+				m_InvisibleCooldownTick--;
 
-			// Player is back visible
-			if(!m_InvisibleTick && GetPlayer()->GetTeam() == TEAM_BLUE)
-			{
-				GameServer()->CreatePlayerSpawn(m_Pos);
-			}
-		}
-		else if(m_InvisibleCooldownTick)
-		{
-			m_InvisibleCooldownTick--;
-			if(Server()->Tick() % 2 == 0)
-			{
+				// Show invisible cooldown
 				int Seconds = m_InvisibleCooldownTick / Server()->TickSpeed();
 				int MiliSeconds = ((float)m_InvisibleCooldownTick / (float)Server()->TickSpeed() - m_InvisibleCooldownTick / Server()->TickSpeed()) * 100;
 
 				char aBuf[64];
-				str_format(aBuf, sizeof(aBuf), "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nInvisibility cooldown: %d.%d", Seconds, MiliSeconds);
-				GameServer()->SendBroadcast(aBuf, GetPlayer()->GetCID());
+				str_format(aBuf, sizeof(aBuf), "Invisibility cooldown: %d.%d", Seconds, MiliSeconds);
+				SendPersonalBroadcast(aBuf);
 			}
-		}
-		else
-		{
-			if(Server()->Tick() % 2 == 0)
+			else
 			{
-				GameServer()->SendBroadcast("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nInvisibility available", GetPlayer()->GetCID());
+				SendPersonalBroadcast("Invisibility available");
 			}
 		}
-	}
 
-	// Zombie Statuses
-	if(GetPlayer()->GetTeam() == TEAM_RED)
-	{
-		if(Server()->Tick() % 2 == 0)
+		// Zombie Statuses
+		if(GetPlayer()->GetTeam() == TEAM_RED)
 		{
-			char aBuf[64];
-			str_format(aBuf, sizeof(aBuf), "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nHealth: %d | Armor: %d", m_Health, m_Armor);
-			GameServer()->SendBroadcast(aBuf, GetPlayer()->GetCID());
+			if(GetPlayer()->IsPaused())
+			{
+				SendPersonalBroadcast("You are one of the first zombies!\nWait for the warm-up to end to start moving!");
+			}
+			else
+			{
+				char aBuf[64];
+				str_format(aBuf, sizeof(aBuf), "Health: %d | Armor: %d", m_Health, m_Armor);
+				SendPersonalBroadcast(aBuf);
+			}
+
 		}
 	}
 }
@@ -1084,8 +1095,8 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 	// remove self damage
 	if(From == GetPlayer()->GetCID())
 	{
-		if(g_Config.m_PanicGrenadeJumpHuman)
-			m_Core.m_Vel += Force;
+		if(g_Config.m_PanicHumanGrenadeJump)
+			m_Core.m_Vel += Force * 1.5f;
 
 		return false;
 	}
@@ -2573,6 +2584,21 @@ vec2 CCharacter::GetVec2LastestInput()
 void CCharacter::SetAutoHealthLimit()
 {
 	m_MaxHealth = (GetPlayer()->GetTeam() == TEAM_RED) ? g_Config.m_PanicZombieInitialLife : 1;
+}
+
+void CCharacter::SendPersonalBroadcast(const char *Message)
+{
+	if(str_comp(Message, m_LastBroadcastMessage) == 0 && Server()->Tick() % (5 * Server()->TickSpeed()) != 0)
+		return;
+
+	if(Server()->Tick() % (Server()->TickSpeed() / 10) != 0)
+		return;
+
+	str_copy(m_LastBroadcastMessage, Message, sizeof(m_LastBroadcastMessage));
+
+	char aBuf[128];
+	str_format(aBuf, sizeof(aBuf), "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n%s", Message);
+	GameServer()->SendBroadcast(aBuf, GetPlayer()->GetCID());
 }
 
 void CCharacter::SetTurret()

@@ -214,7 +214,7 @@ void CTurret::Fire()
 		GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE);
 
 		// m_ReloadTick = 3600 * Server()->TickSpeed() / (1000 + GameServer()->m_apPlayers[m_Owner]->m_AccData.m_TurretSpeed * 30);
-		m_ReloadTick = 3.6f * Server()->TickSpeed();
+		m_ReloadTick = 1.0f * Server()->TickSpeed();
 
 		m_Ammo--;
 		break;
@@ -300,7 +300,7 @@ void CTurret::Fire()
 		GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE);
 
 		// m_ReloadTick = 3800 * Server()->TickSpeed() / (1000 + GameServer()->m_apPlayers[m_Owner]->m_AccData.m_TurretSpeed * 10);
-		m_ReloadTick = 3.8f * Server()->TickSpeed();
+		m_ReloadTick = 2.8f * Server()->TickSpeed();
 
 		m_Ammo--;
 

@@ -577,6 +577,16 @@ void IGameController::StartRound()
 	ResetZombies();
 	m_aTeamscore[TEAM_RED] = m_aTeamscore[TEAM_BLUE] = 0;
 
+	// Select start zombies (will be sleeping, and will be woken up after the warmup)
+	int ZAtStart = (int)NumPlayers() / (int)g_Config.m_PanicZombieRatio;
+	if(!ZAtStart)
+		ZAtStart = 1;
+
+	for(; ZAtStart; ZAtStart--)
+	{
+		RandomZombie();
+	}
+
 	char aBuf[256];
 	str_format(aBuf, sizeof(aBuf), "start round type='%s' teamplay='%d'", m_pGameType, m_GameFlags & GAMEFLAG_TEAMS);
 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
@@ -681,22 +691,17 @@ void IGameController::Tick()
 			if(m_WarmupKilled)
 				m_WarmupKilled = false;
 
-			GameServer()->SendBroadcast("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nAt least 2 players are needed to start the round", -1);
+			for(auto &pPlayer : GameServer()->m_apPlayers)
+			{
+				if(pPlayer && pPlayer->GetCharacter())
+					pPlayer->GetCharacter()->SendPersonalBroadcast("At least 2 players are needed to start the round");
+			}
 		}
 
-		// Round started. Select a new zombie
+		// Round started. Select new zombie(s)
 		if(NumPlayers() > 1 && !m_Warmup)
 		{
-			int ZAtStart = 1;
-			ZAtStart = (int)NumPlayers() / (int)g_Config.m_PanicZombieRatio;
-
-			if(!ZAtStart)
-				ZAtStart = 1;
-
-			for(; ZAtStart; ZAtStart--)
-			{
-				RandomZombie();
-			}
+			GameServer()->m_apPlayers[m_LastZombie]->Pause(0, true);
 		}
 	}
 
@@ -1315,6 +1320,7 @@ void IGameController::RandomZombie()
 	}
 
 	GameServer()->GetPlayerChar(ZombieCID)->Die(ZombieCID, WEAPON_GAME);
+	GameServer()->m_apPlayers[ZombieCID]->Pause(1, true);
 
 	m_LastZombie2 = m_LastZombie;
 	m_LastZombie = ZombieCID;

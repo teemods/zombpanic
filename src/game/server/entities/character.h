@@ -85,8 +85,11 @@ public:
 	int64_t TeamMask();
 
 	// ZombPanic
+	char m_LastBroadcastMessage[64];
+
 	vec2 GetVec2LastestInput();
 	void SetAutoHealthLimit();
+	void SendPersonalBroadcast(const char *Message);
 	void SetTurret();
 
 private:
