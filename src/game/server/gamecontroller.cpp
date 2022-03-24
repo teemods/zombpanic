@@ -1321,7 +1321,7 @@ void IGameController::RandomZombie()
 	}
 
     // Select random number between 1 and EligibleAmount
-	int ZombieCID;
+	int ZombieCID = 0;
 	int ZombieNumber = random_int(1, EligibleAmount);
 
 	// Match player with selected number
