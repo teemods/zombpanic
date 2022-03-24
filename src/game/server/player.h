@@ -30,7 +30,7 @@ public:
 	void TryRespawn();
 	void Respawn(bool WeakHook = false); // with WeakHook == true the character will be spawned after all calls of Tick from other Players
 	CCharacter *ForceSpawn(vec2 Pos); // required for loading savegames
-	void SetTeam(int Team, bool DoChatMsg = true);
+	void SetTeam(int Team, bool DoChatMsg = true, bool Kill = true);
 	int GetTeam() const { return m_Team; }
 	int GetCID() const { return m_ClientID; }
 	int GetClientVersion() const;

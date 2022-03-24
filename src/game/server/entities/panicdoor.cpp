@@ -52,7 +52,8 @@ void CPanicDoor::Snap(int SnappingClient)
 	if(m_State == DOOR_OPEN || m_State == DOOR_ZOMBIE_OPEN || m_State == DOOR_ZOMBIE_CLOSING || m_State == DOOR_ZOMBIE_REOPENED || NetworkClipped(SnappingClient))
 		return;
 
-	CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, GetID(), sizeof(CNetObj_Pickup)));
+	int Size = Server()->IsSixup(SnappingClient) ? 3 * 4 : sizeof(CNetObj_Pickup);
+	CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, GetID(), Size));
 	if(!pP)
 		return;
 

@@ -1344,11 +1344,11 @@ void CCharacter::Snap(int SnappingClient)
 	if(m_InvisibleTick || m_IsInInvisibleTile)
 	{
 		if(GetPlayer()->GetCID() != SnappingClient)
-		{
 			return;
-		}
 
-		CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_InvisibleShieldID, sizeof(CNetObj_Pickup)));
+		// SixUp needs a custom size or it will lag
+		int Size = Server()->IsSixup(SnappingClient) ? 3 * 4 : sizeof(CNetObj_Pickup);
+		CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_InvisibleShieldID, Size));
 		if(!pP)
 			return;
 

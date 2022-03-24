@@ -787,7 +787,8 @@ void IGameController::Snap(int SnappingClient)
 	pGameInfoObj->m_RoundCurrent = m_RoundCount + 1;
 
 	// DDNet-Skeleton
-	if(IsTeamplay())
+	// The SixUp client can't receive this 0.6 message or it will not connect
+	if(!Server()->IsSixup(SnappingClient) && IsTeamplay())
 	{
 		CNetObj_GameData *pGameDataObj = (CNetObj_GameData *)Server()->SnapNewItem(NETOBJTYPE_GAMEDATA, 0, sizeof(CNetObj_GameData));
 		if(!pGameDataObj)
@@ -797,6 +798,7 @@ void IGameController::Snap(int SnappingClient)
 		pGameDataObj->m_FlagCarrierRed = -1;
 		pGameDataObj->m_FlagCarrierBlue = -1;
 	}
+	// DDNet-Skeleton Finish
 
 	CCharacter *pChr;
 	CPlayer *pPlayer = SnappingClient != SERVER_DEMO_CLIENT ? GameServer()->m_apPlayers[SnappingClient] : 0;
@@ -862,13 +864,13 @@ void IGameController::Snap(int SnappingClient)
 
 		pGameData->m_GameStateEndTick = 0;
 
-		protocol7::CNetObj_GameDataRace *pRaceData = static_cast<protocol7::CNetObj_GameDataRace *>(Server()->SnapNewItem(-protocol7::NETOBJTYPE_GAMEDATARACE, 0, sizeof(protocol7::CNetObj_GameDataRace)));
-		if(!pRaceData)
-			return;
+		// protocol7::CNetObj_GameDataRace *pRaceData = static_cast<protocol7::CNetObj_GameDataRace *>(Server()->SnapNewItem(-protocol7::NETOBJTYPE_GAMEDATARACE, 0, sizeof(protocol7::CNetObj_GameDataRace)));
+		// if(!pRaceData)
+		// 	return;
 
-		pRaceData->m_BestTime = round_to_int(m_CurrentRecord * 1000);
-		pRaceData->m_Precision = 0;
-		pRaceData->m_RaceFlags = protocol7::RACEFLAG_HIDE_KILLMSG | protocol7::RACEFLAG_KEEP_WANTED_WEAPON;
+		// pRaceData->m_BestTime = round_to_int(m_CurrentRecord * 1000);
+		// pRaceData->m_Precision = 0;
+		// pRaceData->m_RaceFlags = protocol7::RACEFLAG_HIDE_KILLMSG | protocol7::RACEFLAG_KEEP_WANTED_WEAPON;
 
 		// DDNet-Skeleton
 		if(IsTeamplay())
@@ -879,6 +881,19 @@ void IGameController::Snap(int SnappingClient)
 			pGameDataTeam->m_TeamscoreRed = (m_aTeamscore[TEAM_RED] == 999) ? m_aTeamscore[TEAM_RED] : NumZombies();
 			pGameDataTeam->m_TeamscoreBlue = (m_aTeamscore[TEAM_BLUE] == 999) ? m_aTeamscore[TEAM_BLUE] : NumHumans();
 		}
+
+		// This pack message can be executed every snap? It doesn't look like it can, but it works.
+		protocol7::CNetMsg_Sv_GameInfo GameInfoMsg;
+		GameInfoMsg.m_GameFlags = m_GameFlags;
+		GameInfoMsg.m_ScoreLimit = g_Config.m_SvScoreLimit;
+		GameInfoMsg.m_TimeLimit = g_Config.m_SvTimeLimit;
+		GameInfoMsg.m_MatchNum = (str_length(g_Config.m_SvMapRotation) && g_Config.m_SvRoundsPerMap) ? g_Config.m_SvRoundsPerMap : 0;
+		GameInfoMsg.m_MatchCurrent =  m_RoundCount + 1;
+
+		protocol7::CNetMsg_Sv_GameInfo GameInfoMsgNoRace = GameInfoMsg;
+		GameInfoMsgNoRace.m_GameFlags &= ~protocol7::GAMEFLAG_RACE;
+
+		Server()->SendPackMsg(&GameInfoMsg, MSGFLAG_VITAL|MSGFLAG_NORECORD, SnappingClient);
 	}
 
 	if(GameServer()->Collision()->m_pSwitchers)
@@ -1341,13 +1356,15 @@ void IGameController::RandomZombie()
 
 		EligibleNumber++;
 	}
-	
-	// Convert player to zombie
-	GameServer()->GetPlayerChar(ZombieCID)->Die(ZombieCID, WEAPON_GAME);
-	GameServer()->m_apPlayers[ZombieCID]->Pause(1, true);
 
+    // Set last zombie before kill, to send first zombie message to everyone
 	m_LastZombie2 = m_LastZombie;
 	m_LastZombie = ZombieCID;
+
+	// Convert player to zombie
+	// Use only die function instead of set zombie. The player will be set to zombie at OnCharacterDeath
+	GameServer()->GetPlayerChar(ZombieCID)->Die(ZombieCID, WEAPON_GAME);
+	GameServer()->m_apPlayers[ZombieCID]->Pause(1, true);
 }
 void IGameController::OnDoorHoldPoint(int Index)
 {

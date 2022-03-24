@@ -386,7 +386,7 @@ void CPlayer::Snap(int SnappingClient)
 			pPlayerInfo->m_PlayerFlags |= protocol7::PLAYERFLAG_ADMIN;
 
 		// Times are in milliseconds for 0.7
-		pPlayerInfo->m_Score = Score == -9999 ? -1 : -Score * 1000;
+		pPlayerInfo->m_Score = Score;
 		pPlayerInfo->m_Latency = Latency;
 	}
 
@@ -624,9 +624,11 @@ CCharacter *CPlayer::ForceSpawn(vec2 Pos)
 	return m_pCharacter;
 }
 
-void CPlayer::SetTeam(int Team, bool DoChatMsg)
+void CPlayer::SetTeam(int Team, bool DoChatMsg, bool Kill)
 {
-	KillCharacter();
+	if(Kill) {
+		KillCharacter();
+	}
 
 	m_Team = Team;
 	m_LastSetTeam = Server()->Tick();
@@ -1003,8 +1005,9 @@ void CPlayer::ProcessScoreResult(CScorePlayerResult &Result)
 // ZombiePanic
 void CPlayer::SetZombie()
 {
-	m_Team = TEAM_RED;
-
+	SetTeam(TEAM_RED, false, false);
+	
+	// Set zombie statuses
 	GetCharacter()->GiveWeapon(WEAPON_GUN, true);
 	GetCharacter()->SetWeapon(WEAPON_HAMMER);
 	GetCharacter()->ResetPickups();
@@ -1020,6 +1023,6 @@ void CPlayer::ResetZombie()
 	if(m_Team == TEAM_SPECTATORS)
 		return;
 
-	m_Team = TEAM_BLUE;
+	SetTeam(TEAM_BLUE, false, false);
 	// m_KillingSpree = m_JumpsShop = m_RangeShop = 0;
 }
