@@ -578,6 +578,7 @@ void IGameController::StartRound()
 	m_aTeamscore[TEAM_RED] = m_aTeamscore[TEAM_BLUE] = 0;
 
 	// Select start zombies (will be sleeping, and will be woken up after the warmup)
+	// No zombies will be selected if there is less than 2 players
 	int ZAtStart = (int)NumPlayers() / (int)g_Config.m_PanicZombieRatio;
 	if(!ZAtStart)
 		ZAtStart = 1;
@@ -1201,7 +1202,7 @@ void IGameController::CycleMap()
 			int Min = 0;
 			int Max = pMapRotationInfo.m_MapCount - 1;
 
-			RandInt = rand() % (Max - Min + 1) + Min; // SKELETON-TODO: USE A BETTER RANDOM INT
+			RandInt = rand() % (Max - Min + 1) + Min; 
 			GetWordFromList(aBuf, g_Config.m_SvMapRotation, pMapRotationInfo.m_MapNameIndices[RandInt]);
 			// int MinPlayers = Server()->GetMinPlayersForMap(aBuf);
 			// if (RandInt != pMapRotationInfo.m_CurrentMapNumber && PlayerCount >= MinPlayers)
@@ -1306,19 +1307,50 @@ void IGameController::ResetZombies()
 
 void IGameController::RandomZombie()
 {
-	int ZombieCID = rand() % MAX_CLIENTS;
+	if(NumPlayers() < 2)
+		return;
 
-	while(
-		!GameServer()->m_apPlayers[ZombieCID] ||
-		(GameServer()->m_apPlayers[ZombieCID] && GameServer()->m_apPlayers[ZombieCID]->GetTeam() == TEAM_SPECTATORS) ||
-		m_LastZombie == ZombieCID ||
-		(NumPlayers() > 2 && m_LastZombie2 == ZombieCID) ||
-		!GameServer()->m_apPlayers[ZombieCID]->GetCharacter() ||
-		(GameServer()->m_apPlayers[ZombieCID]->GetCharacter() && !GameServer()->m_apPlayers[ZombieCID]->GetCharacter()->IsAlive()))
+	// Count eligible players
+	int EligibleAmount = 0;
+	for (auto &pPlayer : GameServer()->m_apPlayers)
 	{
-		ZombieCID = rand() % MAX_CLIENTS;
+		if(! pPlayer || ! pPlayer->GetCharacter())
+			continue;
+
+		if(m_LastZombie == pPlayer->GetCID() || (NumPlayers() > 2 && m_LastZombie2 == pPlayer->GetCID()))
+			continue;
+
+		EligibleAmount++;
 	}
 
+    // Select random number between 1 and EligibleAmount
+	int ZombieCID = 999;
+	int ZombieNumber = rand() % (EligibleAmount - 1 + 1) + 1;
+
+	// Match player with selected number
+	int EligibleNumber = 0;
+	for (auto &pPlayer : GameServer()->m_apPlayers)
+	{
+		if(! pPlayer || ! pPlayer->GetCharacter())
+			continue;
+
+		if(m_LastZombie == pPlayer->GetCID() || (NumPlayers() > 2 && m_LastZombie2 == pPlayer->GetCID()))
+			continue;
+
+		if(EligibleNumber == ZombieNumber) {
+			ZombieCID = pPlayer->GetCID();
+		} else {
+			EligibleNumber++;
+		}
+	}
+
+	// Checking if player was not found - WTF?
+	if(ZombieCID == 999) {
+		StartRound();
+		return;
+	}
+	
+	// Convert player to zombie
 	GameServer()->GetPlayerChar(ZombieCID)->Die(ZombieCID, WEAPON_GAME);
 	GameServer()->m_apPlayers[ZombieCID]->Pause(1, true);
 
