@@ -23,10 +23,6 @@ CTurret::CTurret(CGameWorld *pGameWorld, vec2 Pos, int Owner, int Type, vec2 Pos
 	Direction = GameServer()->GetPlayerChar(m_Owner)->GetVec2LastestInput();
 
 	m_ReloadTick = 0;
-	m_Ammo = 1;
-	// m_Ammo = 1 + GameServer()->m_apPlayers[m_Owner]->m_AccData.m_TurretAmmo;
-
-	ResetRegenerationTime();
 
 	GameServer()->GetPlayerChar(m_Owner)->m_TurretActive[m_Type] = true;
 
@@ -86,13 +82,6 @@ void CTurret::Tick()
 		GameServer()->m_apPlayers[m_Owner]->GetTeam() != TEAM_BLUE)
 		return Reset();
 
-	m_RegenerationTime--;
-	if(m_RegenerationTime < -1)
-	{
-		m_Ammo++;
-		ResetRegenerationTime();
-	}
-
 	if(m_Type == WEAPON_GRENADE)
 	{
 		if(distance(m_Pos2, m_Pos) < 5)
@@ -113,8 +102,6 @@ void CTurret::Tick()
 			m_ReloadTick--;
 			return;
 		}
-		if(!m_Ammo)
-			return;
 
 		int Lifetime = (int)(Server()->TickSpeed() * GameServer()->Tuning()->m_GrenadeLifetime);
 
@@ -137,7 +124,7 @@ void CTurret::Tick()
 
 		GameServer()->CreateSound(m_Pos, SOUND_GRENADE_FIRE);
 
-		// m_ReloadTick = 3000 * Server()->TickSpeed() / (1000 + GameServer()->m_apPlayers[m_Owner]->m_AccData.m_TurretSpeed * 40), m_Ammo--;
+		// m_ReloadTick = 3000 * Server()->TickSpeed() / (1000 + GameServer()->m_apPlayers[m_Owner]->m_AccData.m_TurretSpeed * 40);
 		m_ReloadTick = 3 * Server()->TickSpeed();
 
 		return;
@@ -148,6 +135,13 @@ void CTurret::Tick()
 
 void CTurret::Fire()
 {
+	// Turret is under cooldown
+	if(m_ReloadTick)
+	{
+		m_ReloadTick--;
+		return;
+	}
+
 	CCharacter *pTarget = 0;
 	CCharacter *pClosest = (CCharacter *)GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER);
 
@@ -178,15 +172,6 @@ void CTurret::Fire()
 	Direction = normalize(pTarget->m_Pos - m_Pos);
 	vec2 ProjStartPos = m_Pos + Direction * GetProximityRadius() * 0.75f;
 
-	if(m_ReloadTick)
-	{
-		m_ReloadTick--;
-		return;
-	}
-
-	if(!m_Ammo)
-		return;
-
 	switch(m_Type)
 	{
 	case WEAPON_GUN:
@@ -216,7 +201,6 @@ void CTurret::Fire()
 		// m_ReloadTick = 3600 * Server()->TickSpeed() / (1000 + GameServer()->m_apPlayers[m_Owner]->m_AccData.m_TurretSpeed * 30);
 		m_ReloadTick = 1.0f * Server()->TickSpeed();
 
-		m_Ammo--;
 		break;
 	}
 	case WEAPON_HAMMER:
@@ -235,7 +219,7 @@ void CTurret::Fire()
 			pTarget->TakeDamage(Direction * 2, g_Config.m_PanicHammerTurretInitialDamage, m_Owner, WEAPON_HAMMER);
 
 			SavePosion = m_Pos;
-			m_ReloadTick = 16 * Server()->TickSpeed();
+			m_ReloadTick = 20 * Server()->TickSpeed();
 			return;
 		}
 		SavePosion = m_Pos;
@@ -302,8 +286,6 @@ void CTurret::Fire()
 		// m_ReloadTick = 3800 * Server()->TickSpeed() / (1000 + GameServer()->m_apPlayers[m_Owner]->m_AccData.m_TurretSpeed * 10);
 		m_ReloadTick = 2.8f * Server()->TickSpeed();
 
-		m_Ammo--;
-
 		break;
 	}
 	}
@@ -328,17 +310,12 @@ void CTurret::AddTurretExperience()
 	// }
 }
 
-void CTurret::ResetRegenerationTime()
-{
-	// m_RegenerationTime = 3000 * Server()->TickSpeed() / (1000 + GameServer()->m_apPlayers[m_Owner]->m_AccData.m_TurretShotgun * 27);
-	m_RegenerationTime = 3000 * Server()->TickSpeed() / (1000 + 0 * 27);
-}
-
 void CTurret::Snap(int SnappingClient)
 {
 	if(NetworkClipped(SnappingClient))
 		return;
 
+	// SHOTGUN DOST DISPLAY
 	int InSize = sizeof(m_inIDs) / sizeof(int);
 	for(int i = 0; i < InSize; i++)
 	{
@@ -346,28 +323,18 @@ void CTurret::Snap(int SnappingClient)
 		if(!pEff)
 			continue;
 
-		if(m_ReloadTick && m_Type == WEAPON_HAMMER)
+		// Less aggressive effect for Hammer & Laser that are slower
+		if(m_Type == WEAPON_HAMMER || m_Type == WEAPON_LASER)
 		{
 			pEff->m_X = (int)(cos(angle(Direction) + pi / 9 * i * 4) * (16.0 + m_ReloadTick / 65) + m_Pos.x);
 			pEff->m_Y = (int)(sin(angle(Direction) + pi / 9 * i * 4) * (16.0 + m_ReloadTick / 65) + m_Pos.y);
 		}
-
-		else if(m_ReloadTick && m_Type == WEAPON_LASER)
-		{
-			pEff->m_X = (int)(cos(pi / 9 * i * 4) * (16.0 + m_ReloadTick / 110) + m_Pos.x);
-			pEff->m_Y = (int)(sin(pi / 9 * i * 4) * (16.0 + m_ReloadTick / 110) + m_Pos.y);
-		}
-
-		else if(m_Ammo < 5)
-		{
-			pEff->m_X = (int)(cos(angle(Direction) + pi / 9 * i * 4) * (16.0 + m_ReloadTick / 20) + m_Pos.x);
-			pEff->m_Y = (int)(sin(angle(Direction) + pi / 9 * i * 4) * (16.0 + m_ReloadTick / 20) + m_Pos.y);
-		}
 		else
 		{
-			pEff->m_X = (int)(cos(angle(Direction) + pi / 9 * i * 4) * 16.0 + m_Pos.x);
-			pEff->m_Y = (int)(sin(angle(Direction) + pi / 9 * i * 4) * 16.0 + m_Pos.y);
+			pEff->m_X = (int)(cos(angle(Direction) + pi / 9 * i * 4) * (16.0 + m_ReloadTick / 10) + m_Pos.x);
+			pEff->m_Y = (int)(sin(angle(Direction) + pi / 9 * i * 4) * (16.0 + m_ReloadTick / 10) + m_Pos.y);
 		}
+
 		pEff->m_StartTick = Server()->Tick() - 2;
 		pEff->m_Type = WEAPON_SHOTGUN;
 	}

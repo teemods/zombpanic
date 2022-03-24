@@ -15,7 +15,6 @@ public:
 	void Fire();
 
 	void AddTurretExperience();
-	void ResetRegenerationTime();
 
 	int m_Owner;
 
@@ -24,7 +23,6 @@ private:
 	int m_IDC;
 	int m_IDG;
 	int m_IDS;
-	int m_Ammo;
 	vec2 Direction;
 	vec2 SavePosion;
 	vec2 InitGrenadePos;
