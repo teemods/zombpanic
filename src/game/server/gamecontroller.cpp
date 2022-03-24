@@ -1199,7 +1199,7 @@ void IGameController::CycleMap()
 		int RandInt;
 		for(; i < 32; i++)
 		{
-			RandInt = random_int(0, pMapRotationInfo.m_MapCount - 1); // SKELETON-TODO: USE A BETTER RANDOM INT
+			RandInt = random_int(0, pMapRotationInfo.m_MapCount - 1);
 			GetWordFromList(aBuf, g_Config.m_SvMapRotation, pMapRotationInfo.m_MapNameIndices[RandInt]);
 			// int MinPlayers = Server()->GetMinPlayersForMap(aBuf);
 			// if (RandInt != pMapRotationInfo.m_CurrentMapNumber && PlayerCount >= MinPlayers)
@@ -1321,11 +1321,11 @@ void IGameController::RandomZombie()
 	}
 
     // Select random number between 1 and EligibleAmount
-	int ZombieCID = 999;
-	int ZombieNumber = rand() % (EligibleAmount - 1 + 1) + 1;
+	int ZombieCID;
+	int ZombieNumber = random_int(1, EligibleAmount);
 
 	// Match player with selected number
-	int EligibleNumber = 0;
+	int EligibleNumber = 1;
 	for (auto &pPlayer : GameServer()->m_apPlayers)
 	{
 		if(! pPlayer || ! pPlayer->GetCharacter())
@@ -1334,17 +1334,12 @@ void IGameController::RandomZombie()
 		if(m_LastZombie == pPlayer->GetCID() || (NumPlayers() > 2 && m_LastZombie2 == pPlayer->GetCID()))
 			continue;
 
+		// Found player
 		if(EligibleNumber == ZombieNumber) {
 			ZombieCID = pPlayer->GetCID();
-		} else {
-			EligibleNumber++;
 		}
-	}
 
-	// Checking if player was not found - WTF?
-	if(ZombieCID == 999) {
-		StartRound();
-		return;
+		EligibleNumber++;
 	}
 	
 	// Convert player to zombie
