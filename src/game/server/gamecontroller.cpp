@@ -56,7 +56,7 @@ IGameController::IGameController(class CGameContext *pGameServer)
 	}
 
 	// ZombPanic
-	m_WarmupKilled = false;
+	m_ZombiesSelected = false;
 	for(int i = 0; i < MAX_DOORS; i++)
 	{
 		m_Door[i].m_State = (i > MAX_DOORS / 2) ? DOOR_ZOMBIE_OPEN : DOOR_CLOSED;
@@ -569,24 +569,13 @@ void IGameController::StartRound()
 	Server()->DemoRecorder_HandleAutoStart();
 
 	// Do warmup before start round or the round will finish every time since there is no zombies
-	// Since the zombie is choosen after the warmup finish
 	DoWarmup(g_Config.m_SvWarmup);
 
 	// Reset doors && Reset all players to human and reset team score
 	ResetDoors();
 	ResetZombies();
 	m_aTeamscore[TEAM_RED] = m_aTeamscore[TEAM_BLUE] = 0;
-
-	// Select start zombies (will be sleeping, and will be woken up after the warmup)
-	// No zombies will be selected if there is less than 2 players
-	int ZAtStart = (int)NumPlayers() / (int)g_Config.m_PanicZombieRatio;
-	if(!ZAtStart)
-		ZAtStart = 1;
-
-	for(; ZAtStart; ZAtStart--)
-	{
-		RandomZombie();
-	}
+	m_ZombiesSelected = false;
 
 	char aBuf[256];
 	str_format(aBuf, sizeof(aBuf), "start round type='%s' teamplay='%d'", m_pGameType, m_GameFlags & GAMEFLAG_TEAMS);
@@ -607,18 +596,10 @@ void IGameController::OnReset()
 
 int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon)
 {
-	if(pVictim->GetPlayer()->GetTeam() == TEAM_BLUE && (!m_Warmup || Weapon == WEAPON_GAME))
+	if(pVictim->GetPlayer()->GetTeam() == TEAM_BLUE && !m_Warmup)
 	{
 		pVictim->GetPlayer()->SetZombie();
 		GameServer()->SendChatTarget(pVictim->GetPlayer()->GetCID(), "You are now a zombie! Eat some brains!");
-
-		// killer by world & first zombie
-		if(Weapon == WEAPON_GAME && pVictim->GetPlayer()->GetCID() == m_LastZombie)
-		{
-			char aBuf[64];
-			str_format(aBuf, sizeof(aBuf), "%s' wants your brain! Run away!", Server()->ClientName(pVictim->GetPlayer()->GetCID()));
-			GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf);
-		}
 	}
 
 	return 0;
@@ -628,15 +609,17 @@ void IGameController::OnCharacterSpawn(class CCharacter *pChr)
 {
 	pChr->GiveWeapon(WEAPON_HAMMER);
 
-	// give gun to human
-	if(pChr->GetPlayer()->GetTeam() == TEAM_BLUE)
-	{
-		pChr->GiveWeapon(WEAPON_GUN, false, 10);
-	}
-
 	// Define maximum health
 	pChr->SetAutoHealthLimit();
 	pChr->IncreaseHealth(9999);
+
+	// Give gun to human
+	// OR
+	// Zombie will spawn sleeping if there is warmup
+	if(pChr->GetPlayer()->GetTeam() == TEAM_BLUE)
+		pChr->GiveWeapon(WEAPON_GUN, false, 10);
+	else if(m_Warmup)
+		pChr->GetPlayer()->Pause(1, true);
 }
 
 void IGameController::HandleCharacterTiles(CCharacter *pChr, int MapIndex)
@@ -667,30 +650,44 @@ void IGameController::Tick()
 	// do warmup
 	if(!GameServer()->m_World.m_Paused && m_Warmup)
 	{
-		// Only countdown warmup with players || Reset zombies history when no player
+		// Only countdown warmup with players || Reset everything when there is no players
 		if(NumPlayers() > 1)
 		{
 			m_Warmup--;
 
-			// Kill all players if enter second player
-			if(!m_WarmupKilled)
+			// Select initial zombies
+			if(!m_ZombiesSelected)
 			{
+				// Reset humans to avoid door not opening since the player already crossed the trigger before zombie
+				// This could be reworked to just kill the humans instead of reset the entire game()
+				// It also reset the weapons respawn
 				StartRound();
-				m_WarmupKilled = true;
+
+				int ZAtStart = (int)NumPlayers() / (int)g_Config.m_PanicZombieRatio;
+				if(!ZAtStart)
+					ZAtStart = 1;
+
+				for(; ZAtStart; ZAtStart--)
+				{
+					RandomZombie();
+				}
+
+				m_ZombiesSelected = true;
 			}
 		}
 		else
 		{
+			// Reset lasts zombies and round count
+			// It will reset completely the context of the server
 			m_LastZombie = m_LastZombie2 = -1;
-
-			if(m_Warmup != m_LastWarmup)
-				m_Warmup = m_LastWarmup;
 
 			if(m_RoundCount != 0)
 				m_RoundCount = 0;
 
-			if(m_WarmupKilled)
-				m_WarmupKilled = false;
+			// This mean that the warm up happened
+			// So its needs to start a new round to reset the warm up, zombie doors, zombie selected, players and etc
+			if(m_Warmup != m_LastWarmup)
+				StartRound();
 
 			for(auto &pPlayer : GameServer()->m_apPlayers)
 			{
@@ -699,7 +696,7 @@ void IGameController::Tick()
 			}
 		}
 
-		// Round started. Select new zombie(s)
+		// Round started. Wake up the initial zombies!
 		if(NumPlayers() > 1 && !m_Warmup)
 		{
 			GameServer()->m_apPlayers[m_LastZombie]->Pause(0, true);
@@ -1274,9 +1271,9 @@ int IGameController::NumPlayers()
 {
 	int NumPlayers = 0;
 
-	for(auto &m_apPlayer : GameServer()->m_apPlayers)
+	for(auto &pPlayer : GameServer()->m_apPlayers)
 	{
-		if(m_apPlayer && m_apPlayer->GetTeam() != TEAM_SPECTATORS)
+		if(pPlayer && pPlayer->GetTeam() != TEAM_SPECTATORS)
 			NumPlayers++;
 	}
 
@@ -1287,9 +1284,9 @@ int IGameController::NumZombies()
 {
 	int NumZombies = 0;
 
-	for(auto &m_apPlayer : GameServer()->m_apPlayers)
+	for(auto &pPlayer : GameServer()->m_apPlayers)
 	{
-		if(m_apPlayer && m_apPlayer->GetTeam() == TEAM_RED)
+		if(pPlayer && pPlayer->GetTeam() == TEAM_RED)
 			NumZombies++;
 	}
 
@@ -1300,9 +1297,9 @@ int IGameController::NumHumans()
 {
 	int NumHumans = 0;
 
-	for(auto &m_apPlayer : GameServer()->m_apPlayers)
+	for(auto &pPlayer : GameServer()->m_apPlayers)
 	{
-		if(m_apPlayer && m_apPlayer->GetTeam() == TEAM_BLUE)
+		if(pPlayer && pPlayer->GetTeam() == TEAM_BLUE)
 			NumHumans++;
 	}
 
@@ -1311,61 +1308,49 @@ int IGameController::NumHumans()
 
 void IGameController::ResetZombies()
 {
-	for(auto &m_apPlayer : GameServer()->m_apPlayers)
+	for(auto &pPlayer : GameServer()->m_apPlayers)
 	{
-		if(m_apPlayer)
-			m_apPlayer->ResetZombie();
+		if(pPlayer)
+			pPlayer->ResetZombie();
 	}
 }
 
 void IGameController::RandomZombie()
 {
-	if(NumPlayers() < 2)
-		return;
-
 	// Count eligible players
 	int EligibleAmount = 0;
-	for (auto &pPlayer : GameServer()->m_apPlayers)
+	for(auto &pPlayer : GameServer()->m_apPlayers)
 	{
-		if(! pPlayer || ! pPlayer->GetCharacter())
-			continue;
-
-		if(m_LastZombie == pPlayer->GetCID() || (NumPlayers() > 2 && m_LastZombie2 == pPlayer->GetCID()))
+		if(!pPlayer || m_LastZombie == pPlayer->GetCID() || (NumPlayers() > 2 && m_LastZombie2 == pPlayer->GetCID()))
 			continue;
 
 		EligibleAmount++;
 	}
 
-    // Select random number between 1 and EligibleAmount
+	// Select random number between 1 and EligibleAmount
 	int ZombieCID = 0;
 	int ZombieNumber = random_int(1, EligibleAmount);
 
 	// Match player with selected number
 	int EligibleNumber = 1;
-	for (auto &pPlayer : GameServer()->m_apPlayers)
+	for(auto &pPlayer : GameServer()->m_apPlayers)
 	{
-		if(! pPlayer || ! pPlayer->GetCharacter())
-			continue;
-
-		if(m_LastZombie == pPlayer->GetCID() || (NumPlayers() > 2 && m_LastZombie2 == pPlayer->GetCID()))
+		if(!pPlayer || m_LastZombie == pPlayer->GetCID() || (NumPlayers() > 2 && m_LastZombie2 == pPlayer->GetCID()))
 			continue;
 
 		// Found player
-		if(EligibleNumber == ZombieNumber) {
+		if(EligibleNumber == ZombieNumber)
 			ZombieCID = pPlayer->GetCID();
-		}
 
 		EligibleNumber++;
 	}
 
-    // Set last zombie before kill, to send first zombie message to everyone
 	m_LastZombie2 = m_LastZombie;
 	m_LastZombie = ZombieCID;
 
 	// Convert player to zombie
-	// Use only die function instead of set zombie. The player will be set to zombie at OnCharacterDeath
-	GameServer()->GetPlayerChar(ZombieCID)->Die(ZombieCID, WEAPON_GAME);
-	GameServer()->m_apPlayers[ZombieCID]->Pause(1, true);
+	// The zombie will be chosen before character spawn. So there is no need to kill
+	GameServer()->m_apPlayers[ZombieCID]->SetZombie();
 }
 void IGameController::OnDoorHoldPoint(int Index)
 {

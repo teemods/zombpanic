@@ -626,7 +626,8 @@ CCharacter *CPlayer::ForceSpawn(vec2 Pos)
 
 void CPlayer::SetTeam(int Team, bool DoChatMsg, bool Kill)
 {
-	if(Kill) {
+	if(Kill)
+	{
 		KillCharacter();
 	}
 
@@ -1006,16 +1007,21 @@ void CPlayer::ProcessScoreResult(CScorePlayerResult &Result)
 void CPlayer::SetZombie()
 {
 	SetTeam(TEAM_RED, false, false);
-	
-	// Set zombie statuses
-	GetCharacter()->GiveWeapon(WEAPON_GUN, true);
-	GetCharacter()->SetWeapon(WEAPON_HAMMER);
-	GetCharacter()->ResetPickups();
 
-	GetCharacter()->SetArmor(0);
+	// Only reset everything if there is character
+	// If there is no character, its the initial zombie that will spawn without anything
+	if(GetCharacter())
+	{
+		// Set zombie statuses
+		GetCharacter()->GiveWeapon(WEAPON_GUN, true);
+		GetCharacter()->SetWeapon(WEAPON_HAMMER);
+		GetCharacter()->ResetPickups();
 
-	GetCharacter()->SetAutoHealthLimit();
-	GetCharacter()->IncreaseHealth(9999);
+		GetCharacter()->SetArmor(0);
+
+		GetCharacter()->SetAutoHealthLimit();
+		GetCharacter()->IncreaseHealth(9999);
+	}
 }
 
 void CPlayer::ResetZombie()

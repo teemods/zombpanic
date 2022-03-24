@@ -176,7 +176,7 @@ public:
 
 	// ZombPanic
 	int m_LastWarmup;
-	bool m_WarmupKilled;
+	bool m_ZombiesSelected;
 	int m_LastZombie, m_LastZombie2;
 
 	int NumPlayers();

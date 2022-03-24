@@ -468,15 +468,14 @@ void CCharacter::FireWeapon()
 			CCharacter *pTarget = apEnts[i];
 
 			// no self damage
-			// cant hit invisible
-			// cant hit through walls
+			// cannot hit invisible
+			// cannot hit through walls
 			// alive & need to can collide
 			if(
-				pTarget == this || 
-				pTarget->m_InvisibleTick || 
-				GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL) || 
-				(pTarget->IsAlive() && !CanCollide(pTarget->GetPlayer()->GetCID()))
-			)
+				pTarget == this ||
+				pTarget->m_InvisibleTick ||
+				GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL) ||
+				(pTarget->IsAlive() && !CanCollide(pTarget->GetPlayer()->GetCID())))
 				continue;
 
 			// set his velocity to fast upward (for now)
@@ -910,7 +909,6 @@ void CCharacter::Tick()
 				str_format(aBuf, sizeof(aBuf), "Health: %d | Armor: %d", m_Health, m_Armor);
 				SendPersonalBroadcast(aBuf);
 			}
-
 		}
 	}
 }
