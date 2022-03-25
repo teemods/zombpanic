@@ -217,19 +217,24 @@ MACRO_CONFIG_INT(SvRoundsPerMap, sv_rounds_per_map, 1, 1, 999, CFGFLAG_SERVER, "
 
 // ZombPanic
 MACRO_CONFIG_INT(PanicHumanGrenadeJump, panic_human_grenade_jump, 0, 0, 1, CFGFLAG_SERVER, "Grenade jump for human")
-MACRO_CONFIG_INT(PanicZombieRatio, panic_zombie_ratio, 8, 0, MAX_CLIENTS, CFGFLAG_SERVER, "Infection rate on start")
+MACRO_CONFIG_INT(PanicZombieRatio, panic_zombie_ratio, 8, 2, MAX_CLIENTS, CFGFLAG_SERVER, "Infection rate on start")
 MACRO_CONFIG_INT(PanicInvisibilityDuration, panic_invisibility_duration, 5, 1, 999, CFGFLAG_SERVER, "Duration of invisibility power (seconds)")
 MACRO_CONFIG_INT(PanicInvisibilityCooldown, panic_invisibility_cooldown, 30, 1, 999, CFGFLAG_SERVER, "Cooldown time of invisibility power (seconds)")
 
-MACRO_CONFIG_INT(PanicZombieInitialLife, panic_zombie_initial_life, 300, 0, 9999, CFGFLAG_SERVER, "Initial damage value for hammer player")
+MACRO_CONFIG_INT(PanicWallDuration, panic_wall_duration, 6, 1, 999, CFGFLAG_SERVER, "Duration of player laser wall (seconds)")
+MACRO_CONFIG_INT(PanicTurretWallDuration, panic_turret_wall_duration, 8, 1, 999, CFGFLAG_SERVER, "Duration of turret laser wall (seconds)")
 
-MACRO_CONFIG_INT(PanicHammerPlayerInitialDamage, panic_hammer_initial_damage, 5, 0, 9999, CFGFLAG_SERVER, "Initial damage value for hammer player")
-MACRO_CONFIG_INT(PanicHammerTurretInitialDamage, panic_hammer_turret_initial_damage, 800, 0, 9999, CFGFLAG_SERVER, "Initial damage value for hammer turret")
+MACRO_CONFIG_INT(PanicZombieInitialLife, panic_zombie_initial_life, 300, 1, 9999, CFGFLAG_SERVER, "Initial damage value for hammer player")
 
-MACRO_CONFIG_INT(PanicGunInitialDamage, panic_gun_initial_damage, 2, 0, 9999, CFGFLAG_SERVER, "Initial damage value for the gun")
-MACRO_CONFIG_INT(PanicShotgunInitialDamage, panic_shotgun_initial_damage, 1, 0, 9999, CFGFLAG_SERVER, "Initial damage value for the shotgun")
-MACRO_CONFIG_INT(PanicGrenadeInitialDamage, panic_grenade_initial_damage, 4, 0, 9999, CFGFLAG_SERVER, "Initial damage value for the grenade")
-MACRO_CONFIG_INT(PanicNinjaInitialDamage, panic_ninja_initial_damage, 50, 0, 9999, CFGFLAG_SERVER, "Initial damage value for the ninja")
+MACRO_CONFIG_INT(PanicHammerPlayerInitialDamage, panic_hammer_initial_damage, 5, 1, 9999, CFGFLAG_SERVER, "Initial damage value for hammer player")
+MACRO_CONFIG_INT(PanicHammerTurretInitialDamage, panic_hammer_turret_initial_damage, 800, 1, 9999, CFGFLAG_SERVER, "Initial damage value for hammer turret")
+
+MACRO_CONFIG_INT(PanicShotgunInitialBullets, panic_shotgun_initial_bullets, 5, 1, 9999, CFGFLAG_SERVER, "Initial bullets amount for shotgun shot")
+
+MACRO_CONFIG_INT(PanicGunInitialDamage, panic_gun_initial_damage, 2, 1, 9999, CFGFLAG_SERVER, "Initial damage value for the gun")
+MACRO_CONFIG_INT(PanicShotgunInitialDamage, panic_shotgun_initial_damage, 1, 1, 9999, CFGFLAG_SERVER, "Initial damage value for the shotgun")
+MACRO_CONFIG_INT(PanicGrenadeInitialDamage, panic_grenade_initial_damage, 4, 1, 9999, CFGFLAG_SERVER, "Initial damage value for the grenade")
+MACRO_CONFIG_INT(PanicNinjaInitialDamage, panic_ninja_initial_damage, 50, 1, 9999, CFGFLAG_SERVER, "Initial damage value for the ninja")
 
 MACRO_CONFIG_INT(PanicDoorTime, panic_door_time, 10, 1, 9999, CFGFLAG_SERVER, "Time before doors open (seconds)")
 MACRO_CONFIG_INT(PanicZombieDoorTime, panic_zombie_door_time, 10, 1, 9999, CFGFLAG_SERVER, "Time before zombie doors open/reopen (seconds)")

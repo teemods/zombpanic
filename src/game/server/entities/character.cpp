@@ -549,13 +549,7 @@ void CCharacter::FireWeapon()
 		else
 			Lifetime = (int)(Server()->TickSpeed() * GameServer()->TuningList()[m_TuneZone].m_ShotgunLifetime);
 
-		int ShotSpread = 5;
-		if(ShotSpread > 15)
-		{
-			ShotSpread = 15;
-			if(ShotSpread > 36)
-				ShotSpread = 36;
-		}
+		int ShotSpread = g_Config.m_PanicShotgunInitialBullets;
 
 		float Spreading[20 * 2 + 1];
 		for(int i = 0; i < 20 * 2 + 1; i++)
@@ -628,7 +622,7 @@ void CCharacter::FireWeapon()
 				m_RiflePos = vec2(0, 0);
 				return;
 			}
-			new CWall(GameWorld(), m_RiflePos, m_Pos, GetPlayer()->GetCID(), 8, true);
+			new CWall(GameWorld(), m_RiflePos, m_Pos, GetPlayer()->GetCID(), g_Config.m_PanicWallDuration, true);
 			GameServer()->CreateSound(m_Pos, SOUND_LASER_FIRE);
 		}
 		else
@@ -1136,7 +1130,7 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 	if(m_Health <= 0)
 	{
 		// if team blue dies, it will remain on the same position
-		Die(From, Weapon, (GetPlayer()->GetTeam() == TEAM_BLUE) ? false : true);
+		Die(From, Weapon, GetPlayer()->GetTeam() != TEAM_BLUE);
 
 		// add score to the attacker, if attacker is zombie is 2, if not is 1
 		if(From >= 0 && GameServer()->m_apPlayers[From])

@@ -14,7 +14,13 @@ public:
 
 	void Fire();
 
-	void AddTurretExperience();
+	void HandleGrenadeTurret();
+	void HandleHammerTurret();
+	void HandleLaserTurret();
+	void HandleShootingTurret();
+
+	int GetReloadTick();
+	CCharacter* GetClosestCharacter();
 
 	int m_Owner;
 
@@ -23,14 +29,16 @@ private:
 	int m_IDC;
 	int m_IDG;
 	int m_IDS;
-	vec2 Direction;
-	vec2 SavePosion;
-	vec2 InitGrenadePos;
+
+	vec2 m_Direction;
+
 	vec2 m_Pos2;
-	bool BackSpeed;
+	vec2 m_TemporaryPos;
+	vec2 m_InitGrenadePos;
+
 	int m_Type;
 	int m_ReloadTick;
-	int m_RegenerationTime;
+	bool m_TurretReturning;
 };
 
 #endif // GAME_SERVER_ENTITIES_TURRET_H
