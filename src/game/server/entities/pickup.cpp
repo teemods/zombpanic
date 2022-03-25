@@ -53,7 +53,7 @@ void CPickup::Tick()
 	}
 
 	// maximum ammo per weapon
-	int MaximumAmmo = (m_Subtype == WEAPON_LASER) ? 2 : 10;
+	int MaximumAmmo = (m_Subtype == WEAPON_LASER) ? 1 : 10;
 
 	// Check if a player intersected us
 	CCharacter *apEnts[MAX_CLIENTS];

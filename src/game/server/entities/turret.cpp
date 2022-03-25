@@ -19,17 +19,14 @@ CTurret::CTurret(CGameWorld *pGameWorld, vec2 Pos, int Owner, int Type, vec2 Pos
 	m_Owner = Owner;
 	m_Type = Type;
 
+	m_ReloadTick = 0;
 	m_TemporaryPos = vec2(0, 0);
 	m_InitGrenadePos = Pos;
 
-	if(m_Type == WEAPON_LASER)
+	if(m_Type == WEAPON_LASER || m_Type == WEAPON_GRENADE)
 		m_Direction = normalize(m_Pos2 - m_Pos);
 	else
 		m_Direction = GameServer()->GetPlayerChar(m_Owner)->GetVec2LastestInput();
-
-	m_ReloadTick = 0;
-
-	GameServer()->GetPlayerChar(m_Owner)->m_TurretActive[m_Type] = true;
 
 	int InSize = sizeof(m_inIDs) / sizeof(int);
 	for(int i = 0; i < InSize; i++)

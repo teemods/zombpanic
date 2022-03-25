@@ -608,21 +608,11 @@ void CCharacter::FireWeapon()
 
 	case WEAPON_LASER:
 	{
-		// vec2 To;
-		if(m_RiflePos != vec2(0, 0))
-		{
-			if(m_RiflePos == m_Pos)
-			{
-				m_aWeapons[WEAPON_LASER].m_Ammo = 2;
-				GameServer()->SendChatTarget(GetPlayer()->GetCID(), "The second point can not be set here");
-				m_RiflePos = vec2(0, 0);
-				return;
-			}
-			new CWall(GameWorld(), m_RiflePos, m_Pos, GetPlayer()->GetCID(), g_Config.m_PanicWallDuration, true);
-			GameServer()->CreateSound(m_Pos, SOUND_LASER_FIRE);
-		}
-		else
-			m_RiflePos = m_Pos;
+		// Make laser collide with the map
+		vec2 SecondLaserPos = m_Pos + (GetVec2LastestInput() * 500);
+		GameServer()->Collision()->IntersectLine(m_Pos, SecondLaserPos, &SecondLaserPos, 0);
+
+		new CWall(GameWorld(), m_Pos, SecondLaserPos, GetPlayer()->GetCID(), g_Config.m_PanicWallDuration, true);
 	}
 	break;
 
@@ -2596,6 +2586,8 @@ void CCharacter::SetTurret()
 
 	int ClientID = GetPlayer()->GetCID();
 
+	m_TurretActive[m_Core.m_ActiveWeapon] = true;
+
 	switch(m_Core.m_ActiveWeapon)
 	{
 	case WEAPON_HAMMER:
@@ -2612,34 +2604,11 @@ void CCharacter::SetTurret()
 
 	case WEAPON_LASER:
 	case WEAPON_GRENADE:
-		if(m_TurretFirstPos != vec2(0, 0))
-		{
-			if(GameServer()->Collision()->IntersectLine(m_TurretFirstPos, m_Pos, &m_Pos, 0))
-			{
-				GameServer()->SendChatTarget(ClientID, "Turret can't be placed between your points.");
-				m_TurretFirstPos = vec2(0, 0);
-				return;
-			}
+		// Make turret collide with the map
+		vec2 SecondTurretPos = m_Pos + (GetVec2LastestInput() * 360);
+		GameServer()->Collision()->IntersectLine(m_Pos, SecondTurretPos, &SecondTurretPos, 0);
 
-			if(distance(m_TurretFirstPos, m_Pos) < 50)
-			{
-				GameServer()->SendChatTarget(ClientID, "This distance is too small. Please create a bigger turret.");
-				m_TurretFirstPos = vec2(0, 0);
-				return;
-			}
-
-			vec2 SecondSpot = m_Pos;
-			if(length(SecondSpot - m_TurretFirstPos) > 360)
-			{
-				vec2 Dir = normalize(m_Pos - m_TurretFirstPos);
-				SecondSpot = m_TurretFirstPos + Dir * 360;
-			}
-
-			new CTurret(GameWorld(), m_TurretFirstPos, ClientID, m_Core.m_ActiveWeapon, SecondSpot);
-			m_TurretFirstPos = vec2(0, 0);
-		}
-		else
-			m_TurretFirstPos = m_Pos;
+		new CTurret(GameWorld(), m_Pos, ClientID, m_Core.m_ActiveWeapon, SecondTurretPos);
 		break;
 	}
 }

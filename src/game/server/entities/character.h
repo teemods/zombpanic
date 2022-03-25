@@ -259,8 +259,6 @@ public:
 	int m_MaxArmor;
 
 	// ZombPanic
-	vec2 m_RiflePos;
-	vec2 m_TurretFirstPos;
 	bool m_TurretActive[5];
 
 	// Hammer Invisible

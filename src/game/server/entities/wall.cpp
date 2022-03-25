@@ -14,8 +14,6 @@ CWall::CWall(CGameWorld *pGameWorld, vec2 From, vec2 To, int Owner, int Time, bo
 	m_From = From;
 	m_Owner = Owner;
 	m_OwnerChar = GameServer()->GetPlayerChar(m_Owner);
-	if(Time > 7)
-		m_OwnerChar->m_RiflePos = vec2(0, 0);
 	m_Time = Time * Server()->TickSpeed();
 	m_ID2 = Server()->SnapNewID();
 	ZombiesON = ZombiesIntersects;
@@ -86,11 +84,11 @@ void CWall::Tick()
 
 	m_Time--;
 
-	if(ZombiesON && GameServer()->Collision()->IntersectLine(m_Pos, m_From, &m_From, 0))
-	{
-		m_OwnerChar->GiveWeapon(WEAPON_LASER, false, 2);
-		return Reset();
-	}
+	// if(ZombiesON && GameServer()->Collision()->IntersectLine(m_Pos, m_From, &m_From, 0))
+	// {
+	// 	m_OwnerChar->GiveWeapon(WEAPON_LASER, false, 2);
+	// 	return Reset();
+	// }
 
 	vec2 At;
 	CCharacter *Hit = GameServer()->m_World.IntersectCharacter(m_Pos, m_From, 6.f, At, NULL);
