@@ -549,18 +549,14 @@ void CCharacter::FireWeapon()
 		else
 			Lifetime = (int)(Server()->TickSpeed() * GameServer()->TuningList()[m_TuneZone].m_ShotgunLifetime);
 
-		int ShotSpread = g_Config.m_PanicShotgunInitialBullets;
-
-		float Spreading[20 * 2 + 1];
-		for(int i = 0; i < 20 * 2 + 1; i++)
-			Spreading[i] = -1.2f + 0.06f * i;
-
-		for(int i = -ShotSpread / 2; i <= ShotSpread / 2; ++i)
+		int ShotSpread = g_Config.m_PanicShotgunInitialShotSpread;
+		for(int i = -ShotSpread; i <= ShotSpread; ++i)
 		{
 			float a = angle(Direction);
-			a += Spreading[i + 20];
-			float v = 1 - (absolute(i) / (float)ShotSpread) / 2;
-			float Speed = mix((float)GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.2f, v);
+			a += 0.070f * i;
+
+			float v = 1 - (absolute(i) / (float)ShotSpread);
+			float Speed = mix((float)GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
 			new CProjectile(
 				GameWorld(),
 				WEAPON_SHOTGUN, //Type

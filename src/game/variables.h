@@ -229,7 +229,7 @@ MACRO_CONFIG_INT(PanicZombieInitialLife, panic_zombie_initial_life, 300, 1, 9999
 MACRO_CONFIG_INT(PanicHammerPlayerInitialDamage, panic_hammer_initial_damage, 5, 1, 9999, CFGFLAG_SERVER, "Initial damage value for hammer player")
 MACRO_CONFIG_INT(PanicHammerTurretInitialDamage, panic_hammer_turret_initial_damage, 800, 1, 9999, CFGFLAG_SERVER, "Initial damage value for hammer turret")
 
-MACRO_CONFIG_INT(PanicShotgunInitialBullets, panic_shotgun_initial_bullets, 5, 1, 9999, CFGFLAG_SERVER, "Initial bullets amount for shotgun shot")
+MACRO_CONFIG_INT(PanicShotgunInitialShotSpread, panic_shotgun_shot_spread, 2, 1, 9999, CFGFLAG_SERVER, "Initial shot spread amount for shotgun shot (extra bullets for left and right)")
 
 MACRO_CONFIG_INT(PanicGunInitialDamage, panic_gun_initial_damage, 2, 1, 9999, CFGFLAG_SERVER, "Initial damage value for the gun")
 MACRO_CONFIG_INT(PanicShotgunInitialDamage, panic_shotgun_initial_damage, 1, 1, 9999, CFGFLAG_SERVER, "Initial damage value for the shotgun")

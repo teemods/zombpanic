@@ -232,19 +232,14 @@ void CTurret::HandleShootingTurret()
 	{
 		int Lifetime = (int)(Server()->TickSpeed() * GameServer()->Tuning()->m_ShotgunLifetime);
 
-		int ShotSpread = g_Config.m_PanicShotgunInitialBullets; // int ShotSpread = 5 + GameServer()->m_apPlayers[m_Owner]->m_AccData.m_TurretLevel / 20;
-
-		float Spreading[16 * 2 + 1];
-		for(int i = 0; i < 16 * 2 + 1; i++)
-			Spreading[i] = -0.8f + 0.05f * i;
-
-		for(int i = -ShotSpread / 2; i <= ShotSpread / 2; ++i)
+		int ShotSpread = g_Config.m_PanicShotgunInitialShotSpread; // int ShotSpread = 5 + GameServer()->m_apPlayers[m_Owner]->m_AccData.m_TurretLevel / 20;
+		for(int i = -ShotSpread; i <= ShotSpread; ++i)
 		{
 			float a = angle(m_Direction);
-			a += Spreading[i + 16];
-			float v = 1 - (absolute(i) / (float)ShotSpread) / 2;
-			float Speed = mix((float)GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
+			a += 0.070f * i;
 
+			float v = 1 - (absolute(i) / (float)ShotSpread);
+			float Speed = mix((float)GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
 			new CProjectile(
 				GameWorld(),
 				WEAPON_SHOTGUN, //Type
