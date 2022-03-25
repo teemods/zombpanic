@@ -31,8 +31,9 @@ CTurret::CTurret(CGameWorld *pGameWorld, vec2 Pos, int Owner, int Type, vec2 Pos
 
 	GameServer()->GetPlayerChar(m_Owner)->m_TurretActive[m_Type] = true;
 
-	for(int &m_inID : m_inIDs)
-		m_inIDs[m_inID] = Server()->SnapNewID();
+	int InSize = sizeof(m_inIDs) / sizeof(int);
+	for(int i = 0; i < InSize; i++)
+		m_inIDs[i] = Server()->SnapNewID();
 
 	m_IDC = Server()->SnapNewID();
 	m_IDS = Server()->SnapNewID();
@@ -45,8 +46,9 @@ void CTurret::Reset()
 {
 	m_MarkedForDestroy = true;
 
-	for(int &m_inID : m_inIDs)
-		Server()->SnapFreeID(m_inIDs[m_inID]);
+	int InSize = sizeof(m_inIDs) / sizeof(int);
+	for(int i = 0; i < InSize; i++)
+		Server()->SnapFreeID(m_inIDs[i]);
 
 	Server()->SnapFreeID(m_IDS);
 	Server()->SnapFreeID(m_IDC);
@@ -315,6 +317,9 @@ void CTurret::Snap(int SnappingClient)
 		return;
 
 	// SHOTGUN DOTS DISPLAY
+	int MaxDistance = 10;
+	int ReloadDistance = 15 + ((m_ReloadTick * 100 / GetReloadTick()) * MaxDistance / 100);
+
 	int InSize = sizeof(m_inIDs) / sizeof(int);
 	for(int i = 0; i < InSize; i++)
 	{
@@ -322,17 +327,10 @@ void CTurret::Snap(int SnappingClient)
 		if(!pEff)
 			continue;
 
-		// Less aggressive effect for Hammer & Laser that are slower
-		if(m_Type == WEAPON_HAMMER || m_Type == WEAPON_LASER)
-		{
-			pEff->m_X = (int)(cos(angle(m_Direction) + pi / 9 * i * 4) * (16.0 + m_ReloadTick / 65) + m_Pos.x);
-			pEff->m_Y = (int)(sin(angle(m_Direction) + pi / 9 * i * 4) * (16.0 + m_ReloadTick / 65) + m_Pos.y);
-		}
-		else
-		{
-			pEff->m_X = (int)(cos(angle(m_Direction) + pi / 9 * i * 4) * (16.0 + m_ReloadTick / 10) + m_Pos.x);
-			pEff->m_Y = (int)(sin(angle(m_Direction) + pi / 9 * i * 4) * (16.0 + m_ReloadTick / 10) + m_Pos.y);
-		}
+		float PiMath = pi / InSize * 2 * (float)(i + 0.5);
+
+		pEff->m_X = m_Pos.x + (int)(cos(angle(m_Direction) + PiMath) * ReloadDistance);
+		pEff->m_Y = m_Pos.y + (int)(sin(angle(m_Direction) + PiMath) * ReloadDistance);
 
 		pEff->m_StartTick = Server()->Tick() - 2;
 		pEff->m_Type = WEAPON_SHOTGUN;

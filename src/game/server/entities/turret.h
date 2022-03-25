@@ -25,7 +25,7 @@ public:
 	int m_Owner;
 
 private:
-	int m_inIDs[9];
+	int m_inIDs[6];
 	int m_IDC;
 	int m_IDG;
 	int m_IDS;
