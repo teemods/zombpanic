@@ -20,7 +20,7 @@ public:
 	void HandleShootingTurret();
 
 	int GetReloadTick();
-	CCharacter* GetClosestCharacter();
+	CCharacter *GetClosestCharacter();
 
 	int m_Owner;
 

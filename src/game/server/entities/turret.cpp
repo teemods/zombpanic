@@ -31,7 +31,7 @@ CTurret::CTurret(CGameWorld *pGameWorld, vec2 Pos, int Owner, int Type, vec2 Pos
 
 	GameServer()->GetPlayerChar(m_Owner)->m_TurretActive[m_Type] = true;
 
-	for(int & m_inID : m_inIDs)
+	for(int &m_inID : m_inIDs)
 		m_inIDs[m_inID] = Server()->SnapNewID();
 
 	m_IDC = Server()->SnapNewID();
@@ -45,7 +45,7 @@ void CTurret::Reset()
 {
 	m_MarkedForDestroy = true;
 
-	for(int & m_inID : m_inIDs)
+	for(int &m_inID : m_inIDs)
 		Server()->SnapFreeID(m_inIDs[m_inID]);
 
 	Server()->SnapFreeID(m_IDS);
@@ -62,7 +62,7 @@ void CTurret::Reset()
 void CTurret::Tick()
 {
 	// This is to prevent from human turret keep alive after the human turn into zombie
-	CCharacter* OwnerCharacter = GameServer()->GetPlayerChar(m_Owner);
+	CCharacter *OwnerCharacter = GameServer()->GetPlayerChar(m_Owner);
 
 	if(!OwnerCharacter || !OwnerCharacter->IsAlive() || OwnerCharacter->GetPlayer()->GetTeam() != TEAM_BLUE)
 		return Reset();
@@ -139,8 +139,8 @@ void CTurret::HandleGrenadeTurret()
 
 void CTurret::HandleHammerTurret()
 {
-	CCharacter* ClosestCharacter = GetClosestCharacter();
-	if(! ClosestCharacter)
+	CCharacter *ClosestCharacter = GetClosestCharacter();
+	if(!ClosestCharacter)
 	{
 		m_TemporaryPos = m_Pos;
 		return;
@@ -190,8 +190,8 @@ void CTurret::HandleLaserTurret()
 
 void CTurret::HandleShootingTurret()
 {
-	CCharacter* ClosestCharacter = GetClosestCharacter();
-	if(! ClosestCharacter)
+	CCharacter *ClosestCharacter = GetClosestCharacter();
+	if(!ClosestCharacter)
 		return;
 
 	// Aim turret to player
@@ -225,11 +225,11 @@ void CTurret::HandleShootingTurret()
 
 		GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE);
 	}
-	
+
 	if(m_Type == WEAPON_SHOTGUN)
 	{
 		int Lifetime = (int)(Server()->TickSpeed() * GameServer()->Tuning()->m_ShotgunLifetime);
-		
+
 		int ShotSpread = g_Config.m_PanicShotgunInitialBullets; // int ShotSpread = 5 + GameServer()->m_apPlayers[m_Owner]->m_AccData.m_TurretLevel / 20;
 
 		float Spreading[16 * 2 + 1];
@@ -263,7 +263,7 @@ void CTurret::HandleShootingTurret()
 
 		GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE);
 	}
-	
+
 	m_ReloadTick = GetReloadTick();
 }
 
@@ -272,7 +272,7 @@ int CTurret::GetReloadTick()
 	float Time = 0.f;
 
 	if(m_Type == WEAPON_GRENADE)
-		Time = 3.00f; 	// m_ReloadTick = 3000 * Server()->TickSpeed() / (1000 + GameServer()->m_apPlayers[m_Owner]->m_AccData.m_TurretSpeed * 40); 
+		Time = 3.00f; // m_ReloadTick = 3000 * Server()->TickSpeed() / (1000 + GameServer()->m_apPlayers[m_Owner]->m_AccData.m_TurretSpeed * 40);
 	if(m_Type == WEAPON_HAMMER)
 		Time = 20.00f;
 	if(m_Type == WEAPON_LASER)
@@ -285,7 +285,7 @@ int CTurret::GetReloadTick()
 	return Time * Server()->TickSpeed();
 }
 
-CCharacter* CTurret::GetClosestCharacter()
+CCharacter *CTurret::GetClosestCharacter()
 {
 	CCharacter *pTarget = 0;
 	CCharacter *pClosest = (CCharacter *)GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER);
@@ -367,6 +367,7 @@ void CTurret::Snap(int SnappingClient)
 
 	pObj2->m_StartTick = Server()->Tick();
 
+	// Custom display for specific turrets
 	switch(m_Type)
 	{
 	case WEAPON_HAMMER:
@@ -374,9 +375,6 @@ void CTurret::Snap(int SnappingClient)
 		pObj2->m_FromY = (int)m_TemporaryPos.y;
 
 		pObj2->m_StartTick = Server()->Tick() - 5;
-		break;
-	case WEAPON_GUN:
-	case WEAPON_SHOTGUN:
 		break;
 	case WEAPON_GRENADE:
 		pObj2->m_X = (int)m_InitGrenadePos.x;
@@ -386,10 +384,6 @@ void CTurret::Snap(int SnappingClient)
 		pObj2->m_FromY = (int)m_Pos2.y;
 
 		pObj2->m_StartTick = Server()->Tick() - 2;
-		break;
-	case WEAPON_LASER:
-		pObj2->m_FromX = (int)m_Pos.x + m_Direction.x * 32;
-		pObj2->m_FromY = (int)m_Pos.y + m_Direction.y * 32;
 		break;
 	}
 
