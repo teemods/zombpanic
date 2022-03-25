@@ -343,7 +343,7 @@ void CTurret::Snap(int SnappingClient)
 
 	pObj->m_X = (int)m_Pos.x;
 	pObj->m_Y = (int)m_Pos.y;
-	pObj->m_StartTick = Server()->Tick() - 3;
+	pObj->m_StartTick = Server()->Tick() - 3; // ???
 	pObj->m_Type = m_Type;
 
 	// LASER WALL ON POSITION 1
@@ -372,7 +372,7 @@ void CTurret::Snap(int SnappingClient)
 		pObj2->m_FromX = (int)m_TemporaryPos.x;
 		pObj2->m_FromY = (int)m_TemporaryPos.y;
 
-		pObj2->m_StartTick = Server()->Tick() - 5;
+		pObj2->m_StartTick = Server()->Tick() - 5; // Thin line effect
 		break;
 	case WEAPON_GRENADE:
 		pObj2->m_X = (int)m_InitGrenadePos.x;
@@ -381,7 +381,7 @@ void CTurret::Snap(int SnappingClient)
 		pObj2->m_FromX = (int)m_Pos2.x;
 		pObj2->m_FromY = (int)m_Pos2.y;
 
-		pObj2->m_StartTick = Server()->Tick() - 2;
+		pObj2->m_StartTick = Server()->Tick() - 2; // Grenade bullets needs to be above the laser
 		break;
 	}
 
