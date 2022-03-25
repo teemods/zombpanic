@@ -114,76 +114,34 @@ void CProjectile::Tick()
 	// This is to prevent from human shoot and then turn into zombie and then kill other humans with the bullet
 	if(m_Owner >= 0)
 	{
-		if(!GameServer()->GetPlayerChar(m_Owner) ||
-			!GameServer()->GetPlayerChar(m_Owner)->IsAlive() ||
-			GameServer()->m_apPlayers[m_Owner]->GetTeam() != TEAM_BLUE)
+		CCharacter *OwnerCharacter = GameServer()->GetPlayerChar(m_Owner);
+		if(!OwnerCharacter || !OwnerCharacter->IsAlive() || OwnerCharacter->GetPlayer()->GetTeam() != TEAM_BLUE)
 			return Reset();
 	}
 
-	float Pt = (Server()->Tick() - m_StartTick - 1) / (float)Server()->TickSpeed();
-	float Ct = (Server()->Tick() - m_StartTick) / (float)Server()->TickSpeed();
+	float Pt = (Server()->Tick()-m_StartTick-1)/(float)Server()->TickSpeed();
+	float Ct = (Server()->Tick()-m_StartTick)/(float)Server()->TickSpeed();
 	vec2 PrevPos = GetPos(Pt);
 	vec2 CurPos = GetPos(Ct);
-	vec2 ColPos;
-	vec2 NewPos;
-	int Collide = GameServer()->Collision()->IntersectLine(PrevPos, CurPos, &ColPos, &NewPos);
-	CCharacter *pOwnerChar = 0;
+	int Collide = GameServer()->Collision()->IntersectLine(PrevPos, CurPos, &CurPos, 0);
+	CCharacter *OwnerChar = GameServer()->GetPlayerChar(m_Owner);
+	CCharacter *TargetChr = GameServer()->m_World.IntersectCharacter(PrevPos, CurPos, 6.0f, CurPos, OwnerChar);
 
-	if(m_Owner >= 0)
-		pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
+	m_LifeSpan--;
 
-	CCharacter *pTargetChr = 0;
-
-	if(pOwnerChar ? !(pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_GRENADE) : g_Config.m_SvHit)
-		pTargetChr = GameServer()->m_World.IntersectCharacter(PrevPos, ColPos, m_Freeze ? 1.0f : 6.0f, ColPos, pOwnerChar, m_Owner);
-
-	if(m_LifeSpan > -1)
-		m_LifeSpan--;
-
-	int64_t TeamMask = -1LL;
-	// bool IsWeaponCollide = false;
-	// if(
-	// 	pOwnerChar &&
-	// 	pTargetChr &&
-	// 	pOwnerChar->IsAlive() &&
-	// 	pTargetChr->IsAlive() &&
-	// 	!pTargetChr->CanCollide(m_Owner))
-	// {
-	// 	IsWeaponCollide = true;
-	// }
-
-	if(pOwnerChar && pOwnerChar->IsAlive())
-	{
-		TeamMask = pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner);
-	}
-	else if(m_Owner >= 0 && (m_Type != WEAPON_GRENADE || g_Config.m_SvDestroyBulletsOnDeath || m_BelongsToPracticeTeam))
-	{
-		m_MarkedForDestroy = true;
-		return;
-	}
-
-	// ZombPanic
-
+	// Projectile colliding with player
 	// Projectile colliding with the map
 	// Projectile getting out of the map
-	// Projectile colliding with player
-	if(
-		Collide ||
-		GameLayerClipped(CurPos) ||
-		(pTargetChr && pTargetChr->GetPlayer() && pTargetChr->GetPlayer()->GetTeam() != pOwnerChar->GetPlayer()->GetTeam()))
+	if(TargetChr || Collide || m_LifeSpan < 0 || GameLayerClipped(CurPos))
 	{
 		if(m_LifeSpan >= 0 || m_Type == WEAPON_GRENADE)
-			GameServer()->CreateSound(CurPos, m_SoundImpact, TeamMask);
+			GameServer()->CreateSound(CurPos, m_SoundImpact);
 
 		if(m_Explosive)
-		{
-			GameServer()->CreateExplosion(CurPos, m_Owner, m_Type, false, -1, TeamMask);
-		}
-		else if(pTargetChr && pTargetChr->GetPlayer())
-		{
-			// If colliding with player
-			pTargetChr->TakeDamage(m_Direction * maximum(0.001f, m_Force), m_Damage, m_Owner, m_Type);
-		}
+			GameServer()->CreateExplosion(CurPos, m_Owner, m_Type, false, -1, -1LL);
+
+		else if(TargetChr)
+			TargetChr->TakeDamage(m_Direction * maximum(0.001f, m_Force), m_Damage, m_Owner, m_Type);
 
 		Reset();
 	}
@@ -211,26 +169,6 @@ void CProjectile::Snap(int SnappingClient)
 	if(NetworkClipped(SnappingClient, GetPos(Ct)))
 		return;
 
-	if(m_LifeSpan == -2)
-	{
-		CNetObj_EntityEx *pEntData = static_cast<CNetObj_EntityEx *>(Server()->SnapNewItem(NETOBJTYPE_ENTITYEX, GetID(), sizeof(CNetObj_EntityEx)));
-		if(!pEntData)
-			return;
-
-		pEntData->m_SwitchNumber = m_Number;
-		pEntData->m_Layer = m_Layer;
-		pEntData->m_EntityClass = ENTITYCLASS_PROJECTILE;
-	}
-
-	int SnappingClientVersion = SnappingClient != SERVER_DEMO_CLIENT ? GameServer()->GetClientVersion(SnappingClient) : CLIENT_VERSIONNR;
-	if(SnappingClientVersion < VERSION_DDNET_SWITCH)
-	{
-		CCharacter *pSnapChar = GameServer()->GetPlayerChar(SnappingClient);
-		int Tick = (Server()->Tick() % Server()->TickSpeed()) % ((m_Explosive) ? 6 : 20);
-		if(pSnapChar && pSnapChar->IsAlive() && (m_Layer == LAYER_SWITCH && m_Number > 0 && !GameServer()->Collision()->m_pSwitchers[m_Number].m_Status[pSnapChar->Team()] && (!Tick)))
-			return;
-	}
-
 	CCharacter *pOwnerChar = 0;
 	int64_t TeamMask = -1LL;
 
@@ -243,26 +181,11 @@ void CProjectile::Snap(int SnappingClient)
 	if(SnappingClient != SERVER_DEMO_CLIENT && m_Owner != -1 && !CmaskIsSet(TeamMask, SnappingClient))
 		return;
 
-	CNetObj_DDNetProjectile DDNetProjectile;
-	if(SnappingClientVersion >= VERSION_DDNET_ANTIPING_PROJECTILE && FillExtraInfo(&DDNetProjectile))
-	{
-		int Type = SnappingClientVersion < VERSION_DDNET_MSG_LEGACY ? (int)NETOBJTYPE_PROJECTILE : NETOBJTYPE_DDNETPROJECTILE;
-		void *pProj = Server()->SnapNewItem(Type, GetID(), sizeof(DDNetProjectile));
-		if(!pProj)
-		{
-			return;
-		}
-		mem_copy(pProj, &DDNetProjectile, sizeof(DDNetProjectile));
-	}
-	else
-	{
-		CNetObj_Projectile *pProj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, GetID(), sizeof(CNetObj_Projectile)));
-		if(!pProj)
-		{
-			return;
-		}
-		FillInfo(pProj);
-	}
+	CNetObj_Projectile *pProj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, GetID(), sizeof(CNetObj_Projectile)));
+	if(!pProj)
+		return;
+
+	FillInfo(pProj);
 }
 
 void CProjectile::SwapClients(int Client1, int Client2)

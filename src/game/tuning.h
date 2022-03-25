@@ -27,10 +27,10 @@ MACRO_TUNING_PARAM(GunCurvature, gun_curvature, 1.25f, "Gun curvature")
 MACRO_TUNING_PARAM(GunSpeed, gun_speed, 2200.0f, "Gun speed")
 MACRO_TUNING_PARAM(GunLifetime, gun_lifetime, 2.0f, "Gun lifetime")
 
-MACRO_TUNING_PARAM(ShotgunCurvature, shotgun_curvature, 1.25f, "Shotgun curvature")
+MACRO_TUNING_PARAM(ShotgunCurvature, shotgun_curvature, 0, "Shotgun curvature")
 MACRO_TUNING_PARAM(ShotgunSpeed, shotgun_speed, 200.0f, "Shotgun speed")
 MACRO_TUNING_PARAM(ShotgunSpeeddiff, shotgun_speeddiff, 0.8f, "(UNUSED) Speed difference between shotgun bullets")
-MACRO_TUNING_PARAM(ShotgunLifetime, shotgun_lifetime, 0.20f, "(UNUSED) Shotgun lifetime")
+MACRO_TUNING_PARAM(ShotgunLifetime, shotgun_lifetime, 6.00f, "(UNUSED) Shotgun lifetime")
 
 MACRO_TUNING_PARAM(GrenadeCurvature, grenade_curvature, 7.0f, "Grenade curvature")
 MACRO_TUNING_PARAM(GrenadeSpeed, grenade_speed, 0.01f, "Grenade speed")

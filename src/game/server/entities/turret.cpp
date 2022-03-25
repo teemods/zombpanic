@@ -327,10 +327,10 @@ void CTurret::Snap(int SnappingClient)
 		if(!pEff)
 			continue;
 
-		float PiMath = pi / InSize * 2 * (float)(i + 0.5);
+		float Radians = 2 * pi / InSize * (float)(i + 0.5);
 
-		pEff->m_X = m_Pos.x + (int)(cos(angle(m_Direction) + PiMath) * ReloadDistance);
-		pEff->m_Y = m_Pos.y + (int)(sin(angle(m_Direction) + PiMath) * ReloadDistance);
+		pEff->m_X = m_Pos.x + (int)(cos(angle(m_Direction) + Radians) * ReloadDistance);
+		pEff->m_Y = m_Pos.y + (int)(sin(angle(m_Direction) + Radians) * ReloadDistance);
 
 		pEff->m_StartTick = Server()->Tick() - 2;
 		pEff->m_Type = WEAPON_SHOTGUN;
