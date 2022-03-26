@@ -2098,6 +2098,8 @@ if(SERVER)
     entities/gun.h
     entities/laser.cpp
     entities/laser.h
+    entities/laserwall.cpp
+    entities/laserwall.h
     entities/light.cpp
     entities/light.h
     entities/panicdoor.cpp
@@ -2110,8 +2112,6 @@ if(SERVER)
     entities/projectile.h
     entities/turret.cpp
     entities/turret.h
-    entities/wall.cpp
-    entities/wall.h
     entity.cpp
     entity.h
     eventhandler.cpp

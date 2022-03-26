@@ -19,7 +19,7 @@ public:
 	void HandleLaserTurret();
 	void HandleShootingTurret();
 
-	int GetReloadTick();
+	int GetInitialReloadTick();
 	CCharacter *GetClosestCharacter();
 
 	int m_Owner;

@@ -9,7 +9,7 @@
 
 #include "projectile.h"
 #include "turret.h"
-#include "wall.h"
+#include "laserwall.h"
 
 CTurret::CTurret(CGameWorld *pGameWorld, vec2 Pos, int Owner, int Type, vec2 Pos2) :
 	CEntity(pGameWorld, CGameWorld::ENTTYPE_TURRET)
@@ -133,7 +133,7 @@ void CTurret::HandleGrenadeTurret()
 
 	GameServer()->CreateSound(m_Pos, SOUND_GRENADE_FIRE);
 
-	m_ReloadTick = GetReloadTick();
+	m_ReloadTick = GetInitialReloadTick();
 }
 
 void CTurret::HandleHammerTurret()
@@ -164,7 +164,7 @@ void CTurret::HandleHammerTurret()
 		ClosestCharacter->TakeDamage(m_Direction * 2, g_Config.m_PanicHammerTurretInitialDamage, m_Owner, WEAPON_HAMMER);
 
 		m_TemporaryPos = m_Pos;
-		m_ReloadTick = GetReloadTick();
+		m_ReloadTick = GetInitialReloadTick();
 	}
 }
 
@@ -174,16 +174,18 @@ void CTurret::HandleLaserTurret()
 	if(m_ReloadTick)
 		return;
 
-	vec2 Intersection;
-	CCharacter *pTargetChr = GameServer()->m_World.IntersectCharacter(m_Pos, m_Pos2, 1.0f, Intersection);
-
-	// Shot wall only for zombies
-	if(pTargetChr && pTargetChr->GetPlayer()->GetTeam() == TEAM_RED)
+	// Radius: 6.0 (Wall collision radius) + 4.0 (Margin to not stuck the tee)
+	for(auto &pCharacter : GameWorld()->IntersectedCharacters(m_Pos, m_Pos2, 10.0f))
 	{
-		new CWall(GameWorld(), m_Pos, m_Pos2, m_Owner, g_Config.m_PanicTurretWallDuration, true);
+		if(pCharacter->GetPlayer()->GetTeam() != TEAM_RED)
+			continue;
+
+		new CLaserWall(GameWorld(), m_Pos, m_Pos2, m_Owner, g_Config.m_PanicTurretWallDuration);
 		GameServer()->CreateSound(m_Pos, SOUND_LASER_FIRE);
 
-		m_ReloadTick = GetReloadTick();
+		m_ReloadTick = GetInitialReloadTick();
+
+		break;
 	}
 }
 
@@ -258,10 +260,10 @@ void CTurret::HandleShootingTurret()
 		GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE);
 	}
 
-	m_ReloadTick = GetReloadTick();
+	m_ReloadTick = GetInitialReloadTick();
 }
 
-int CTurret::GetReloadTick()
+int CTurret::GetInitialReloadTick()
 {
 	float Time = 0.f;
 
@@ -309,7 +311,7 @@ void CTurret::Snap(int SnappingClient)
 
 	// SHOTGUN DOTS DISPLAY
 	int MaxDistance = 10;
-	int ReloadDistance = 15 + ((m_ReloadTick * 100 / GetReloadTick()) * MaxDistance / 100);
+	int ReloadDistance = 15 + ((m_ReloadTick * 100 / GetInitialReloadTick()) * MaxDistance / 100);
 
 	int InSize = sizeof(m_inIDs) / sizeof(int);
 	for(int i = 0; i < InSize; i++)
@@ -320,8 +322,8 @@ void CTurret::Snap(int SnappingClient)
 
 		float Radians = 2 * pi / InSize * (float)(i + 0.5);
 
-		pEff->m_X = m_Pos.x + (int)(cos(angle(m_Direction) + Radians) * ReloadDistance);
-		pEff->m_Y = m_Pos.y + (int)(sin(angle(m_Direction) + Radians) * ReloadDistance);
+		pEff->m_X = m_Pos.x + (cos(angle(m_Direction) + Radians) * ReloadDistance);
+		pEff->m_Y = m_Pos.y + (sin(angle(m_Direction) + Radians) * ReloadDistance);
 
 		pEff->m_StartTick = Server()->Tick() - 2;
 		pEff->m_Type = WEAPON_SHOTGUN;

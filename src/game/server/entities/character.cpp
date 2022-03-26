@@ -18,7 +18,7 @@
 
 #include "panicdoor.h"
 #include "turret.h"
-#include "wall.h"
+#include "laserwall.h"
 
 MACRO_ALLOC_POOL_ID_IMPL(CCharacter, MAX_CLIENTS)
 
@@ -611,7 +611,7 @@ void CCharacter::FireWeapon()
 		vec2 SecondLaserPos = m_Pos + (GetVec2LastestInput() * g_Config.m_PanicWallMaxSize);
 		GameServer()->Collision()->IntersectLine(m_Pos, SecondLaserPos, &SecondLaserPos, 0);
 
-		new CWall(GameWorld(), m_Pos, SecondLaserPos, GetPlayer()->GetCID(), g_Config.m_PanicWallDuration, true);
+		new CLaserWall(GameWorld(), m_Pos, SecondLaserPos, GetPlayer()->GetCID(), g_Config.m_PanicWallDuration);
 
 		GameServer()->CreateSound(m_Pos, SOUND_LASER_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 	}
