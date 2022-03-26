@@ -609,7 +609,7 @@ void CCharacter::FireWeapon()
 	case WEAPON_LASER:
 	{
 		// Make laser collide with the map
-		vec2 SecondLaserPos = m_Pos + (GetVec2LastestInput() * 500);
+		vec2 SecondLaserPos = m_Pos + (GetVec2LastestInput() * g_Config.m_PanicWallMaxSize);
 		GameServer()->Collision()->IntersectLine(m_Pos, SecondLaserPos, &SecondLaserPos, 0);
 
 		new CWall(GameWorld(), m_Pos, SecondLaserPos, GetPlayer()->GetCID(), g_Config.m_PanicWallDuration, true);
@@ -837,6 +837,8 @@ void CCharacter::Tick()
 		// Human statuses
 		if(GetPlayer()->GetTeam() == TEAM_BLUE)
 		{
+			char InvisibilityMessage[32];
+
 			// Using this logic the countdown will start
 			// only after the invisibility effect finish
 			if(m_InvisibleTick)
@@ -850,13 +852,10 @@ void CCharacter::Tick()
 				}
 
 				// Show invisible timer
-
 				int Seconds = m_InvisibleTick / Server()->TickSpeed();
 				int MiliSeconds = ((float)m_InvisibleTick / (float)Server()->TickSpeed() - m_InvisibleTick / Server()->TickSpeed()) * 100;
 
-				char aBuf[64];
-				str_format(aBuf, sizeof(aBuf), "Invisible: %d.%d", Seconds, MiliSeconds);
-				SendPersonalBroadcast(aBuf);
+				str_format(InvisibilityMessage, sizeof(InvisibilityMessage), "Invisible: %d.%d", Seconds, MiliSeconds);
 			}
 			else if(m_InvisibleCooldownTick)
 			{
@@ -866,14 +865,16 @@ void CCharacter::Tick()
 				int Seconds = m_InvisibleCooldownTick / Server()->TickSpeed();
 				int MiliSeconds = ((float)m_InvisibleCooldownTick / (float)Server()->TickSpeed() - m_InvisibleCooldownTick / Server()->TickSpeed()) * 100;
 
-				char aBuf[64];
-				str_format(aBuf, sizeof(aBuf), "Invisibility cooldown: %d.%d", Seconds, MiliSeconds);
-				SendPersonalBroadcast(aBuf);
+				str_format(InvisibilityMessage, sizeof(InvisibilityMessage), "Inv. cooldown: %d.%d", Seconds, MiliSeconds);
 			}
 			else
 			{
-				SendPersonalBroadcast("Invisibility available");
+				str_copy(InvisibilityMessage, "Inv. available", sizeof(InvisibilityMessage));
 			}
+
+			char aBuf[64];
+			str_format(aBuf, sizeof(aBuf), "%s | %s", InvisibilityMessage, (! m_TurretActive[m_Core.m_ActiveWeapon]) ? "Turret Available" : "Turret Unavailable");
+			SendPersonalBroadcast(aBuf);
 		}
 
 		// Zombie Statuses
@@ -2605,7 +2606,7 @@ void CCharacter::SetTurret()
 	case WEAPON_LASER:
 	case WEAPON_GRENADE:
 		// Make turret collide with the map
-		vec2 SecondTurretPos = m_Pos + (GetVec2LastestInput() * 360);
+		vec2 SecondTurretPos = m_Pos + (GetVec2LastestInput() * g_Config.m_PanicTurretMaxSize);
 		GameServer()->Collision()->IntersectLine(m_Pos, SecondTurretPos, &SecondTurretPos, 0);
 
 		new CTurret(GameWorld(), m_Pos, ClientID, m_Core.m_ActiveWeapon, SecondTurretPos);

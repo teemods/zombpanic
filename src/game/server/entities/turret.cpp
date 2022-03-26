@@ -106,7 +106,7 @@ void CTurret::HandleGrenadeTurret()
 		m_TemporaryPos = normalize(m_Pos2 - m_Pos);
 	}
 
-	m_Pos += m_TemporaryPos * 1.5f;
+	m_Pos += m_TemporaryPos * (distance(m_Pos2, m_InitGrenadePos) / (float)(g_Config.m_PanicTurretMaxSize / 2));
 
 	// Do not spawn granade if in cooldown
 	if(m_ReloadTick)
@@ -284,17 +284,16 @@ CCharacter *CTurret::GetClosestCharacter()
 	CCharacter *pTarget = 0;
 	CCharacter *pClosest = (CCharacter *)GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER);
 
-	// int D = 400.0f+GameServer()->m_apPlayers[m_Owner]->m_AccData.m_TurretRange;
-	int D = 400.f;
+	int DetectDistance = g_Config.m_PanicTurretDetectDistance;
 	while(pClosest)
 	{
-		int Dis = distance(pClosest->m_Pos, m_Pos);
-		if(Dis <= D && pClosest->GetPlayer()->GetTeam() == TEAM_RED)
+		int DistanceToCharacter = distance(pClosest->m_Pos, m_Pos);
+		if(DistanceToCharacter <= DetectDistance && pClosest->GetPlayer()->GetTeam() == TEAM_RED)
 		{
 			if(!GameServer()->Collision()->IntersectLine(m_Pos, pClosest->m_Pos, 0, 0))
 			{
 				pTarget = pClosest;
-				D = Dis;
+				DetectDistance = DistanceToCharacter;
 			}
 		}
 		pClosest = (CCharacter *)pClosest->TypeNext();
