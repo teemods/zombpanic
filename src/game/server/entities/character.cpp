@@ -451,10 +451,9 @@ void CCharacter::FireWeapon()
 		}
 
 		// Human invisible system
-		// Only enable the system with at least 2 players
 		if(GetPlayer()->GetTeam() == TEAM_BLUE)
 		{
-			if(GameServer()->m_pController->NumPlayers() > 1 && !m_InvisibleCooldownTick)
+			if(!m_InvisibleCooldownTick)
 			{
 				GameServer()->CreatePlayerSpawn(m_Pos);
 
@@ -613,6 +612,8 @@ void CCharacter::FireWeapon()
 		GameServer()->Collision()->IntersectLine(m_Pos, SecondLaserPos, &SecondLaserPos, 0);
 
 		new CWall(GameWorld(), m_Pos, SecondLaserPos, GetPlayer()->GetCID(), g_Config.m_PanicWallDuration, true);
+
+		GameServer()->CreateSound(m_Pos, SOUND_LASER_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 	}
 	break;
 
@@ -873,7 +874,7 @@ void CCharacter::Tick()
 			}
 
 			char aBuf[64];
-			str_format(aBuf, sizeof(aBuf), "%s | %s", InvisibilityMessage, (! m_TurretActive[m_Core.m_ActiveWeapon]) ? "Turret available" : "Turret unavailable");
+			str_format(aBuf, sizeof(aBuf), "%s | %s", InvisibilityMessage, (!m_TurretActive[m_Core.m_ActiveWeapon]) ? "Turret available" : "Turret unavailable");
 			SendPersonalBroadcast(aBuf);
 		}
 
@@ -2576,7 +2577,7 @@ void CCharacter::SendPersonalBroadcast(const char *Message)
 	str_copy(m_LastBroadcastMessage, Message, sizeof(m_LastBroadcastMessage));
 
 	char aBuf[128];
-	str_format(aBuf, sizeof(aBuf), "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n%s", Message);
+	str_format(aBuf, sizeof(aBuf), "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n%s", Message);
 	GameServer()->SendBroadcast(aBuf, GetPlayer()->GetCID());
 }
 
