@@ -658,9 +658,9 @@ void IGameController::Tick()
 			// Select initial zombies
 			if(!m_ZombiesSelected)
 			{
-				// Reset humans to avoid door not opening since the player already crossed the trigger before zombie
-				// This could be reworked to just kill the humans instead of reset the entire game()
-				// It also reset the weapons respawn
+				// Kill humans to avoid door not opening since the player already crossed the trigger before zombie
+				// Reset doors && Reset the weapons respawn
+				// Reset everything...
 				StartRound();
 
 				int ZAtStart = (int)NumPlayers() / (int)g_Config.m_PanicZombieRatio;
@@ -1312,6 +1312,9 @@ void IGameController::ResetZombies()
 	{
 		if(pPlayer)
 			pPlayer->ResetZombie();
+
+		if(pPlayer && pPlayer->GetCharacter() && pPlayer->IsPaused())
+			pPlayer->Pause(0, true);
 	}
 }
 
@@ -1354,7 +1357,7 @@ void IGameController::RandomZombie()
 }
 void IGameController::OnDoorHoldPoint(int Index)
 {
-	if(m_Door[Index].m_Tick || !(m_Door[Index].m_State == DOOR_CLOSED) || NumPlayers() < 2 || GetDoorTime(Index) == -1)
+	if(m_Door[Index].m_Tick || !(m_Door[Index].m_State == DOOR_CLOSED) || GetDoorTime(Index) == -1)
 		return;
 
 	int const doorTime = GetDoorTime(Index);
@@ -1368,7 +1371,7 @@ void IGameController::OnDoorHoldPoint(int Index)
 
 void IGameController::OnZombieDoorHoldPoint(int Index)
 {
-	if(m_Door[Index].m_State > DOOR_ZOMBIE_OPEN || NumPlayers() < 2 || GetDoorTime(Index) == -1)
+	if(m_Door[Index].m_State > DOOR_ZOMBIE_OPEN || GetDoorTime(Index) == -1)
 		return;
 
 	SetDoorState(Index, DOOR_ZOMBIE_CLOSING);
