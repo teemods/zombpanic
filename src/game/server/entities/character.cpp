@@ -873,7 +873,7 @@ void CCharacter::Tick()
 			}
 
 			char aBuf[64];
-			str_format(aBuf, sizeof(aBuf), "%s | %s", InvisibilityMessage, (! m_TurretActive[m_Core.m_ActiveWeapon]) ? "Turret Available" : "Turret Unavailable");
+			str_format(aBuf, sizeof(aBuf), "%s | %s", InvisibilityMessage, (! m_TurretActive[m_Core.m_ActiveWeapon]) ? "Turret available" : "Turret unavailable");
 			SendPersonalBroadcast(aBuf);
 		}
 
