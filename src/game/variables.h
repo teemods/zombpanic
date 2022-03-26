@@ -216,7 +216,7 @@ MACRO_CONFIG_INT(SvMapRotationRandom, sv_map_rotation_random, 0, 0, 1, CFGFLAG_S
 MACRO_CONFIG_INT(SvRoundsPerMap, sv_rounds_per_map, 1, 1, 999, CFGFLAG_SERVER, "Number of rounds on each map before rotating")
 
 // ZombPanic
-MACRO_CONFIG_INT(PanicHumanGrenadeJump, panic_human_grenade_jump, 0, 0, 1, CFGFLAG_SERVER, "Grenade jump for human")
+MACRO_CONFIG_INT(PanicHumanGrenadeJump, panic_human_grenade_jump, 0, 0, 1, CFGFLAG_SERVER, "Enables grenade jump/repulsion for human")
 MACRO_CONFIG_INT(PanicZombieRatio, panic_zombie_ratio, 8, 2, MAX_CLIENTS, CFGFLAG_SERVER, "Infection rate on start")
 MACRO_CONFIG_INT(PanicInvisibilityDuration, panic_invisibility_duration, 5, 1, 9999, CFGFLAG_SERVER, "Duration of invisibility power (seconds)")
 MACRO_CONFIG_INT(PanicInvisibilityCooldown, panic_invisibility_cooldown, 30, 1, 9999, CFGFLAG_SERVER, "Cooldown time of invisibility power (seconds)")
@@ -237,8 +237,8 @@ MACRO_CONFIG_INT(PanicWallMaxSize, panic_wall_max_size, 500, 1, 9999, CFGFLAG_SE
 MACRO_CONFIG_INT(PanicWallDuration, panic_wall_duration, 6, 1, 9999, CFGFLAG_SERVER, "Duration of player laser wall (seconds)")
 MACRO_CONFIG_INT(PanicTurretWallDuration, panic_turret_wall_duration, 8, 1, 9999, CFGFLAG_SERVER, "Duration of turret laser wall (seconds)")
 
-MACRO_CONFIG_INT(PanicTurretMaxSize, panic_turret_max_size, 360, 1, 9999, CFGFLAG_SERVER, "Turret maximum size (Applicable only for grenade and laser turrets)")
-MACRO_CONFIG_INT(PanicTurretDetectDistance, panic_turret_detect_distance, 400, 1, 9999, CFGFLAG_SERVER, "Initial turret detect distance (Applicable only for hammer, gun and shotgun turrets)")
+MACRO_CONFIG_INT(PanicTurretMaxSize, panic_turret_max_size, 350, 1, 9999, CFGFLAG_SERVER, "Turret maximum size (Applicable only for grenade and laser turrets)")
+MACRO_CONFIG_INT(PanicTurretDetectDistance, panic_turret_detect_distance, 450, 1, 9999, CFGFLAG_SERVER, "Initial turret detect distance (Applicable only for hammer, gun and shotgun turrets)")
 
 MACRO_CONFIG_INT(PanicDoorTime, panic_door_time, 10, 1, 9999, CFGFLAG_SERVER, "Time before doors open (seconds)")
 MACRO_CONFIG_INT(PanicZombieDoorTime, panic_zombie_door_time, 10, 1, 9999, CFGFLAG_SERVER, "Time before zombie doors open/reopen (seconds)")
