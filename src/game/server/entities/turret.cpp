@@ -7,9 +7,9 @@
 
 #include "character.h"
 
+#include "laserwall.h"
 #include "projectile.h"
 #include "turret.h"
-#include "laserwall.h"
 
 CTurret::CTurret(CGameWorld *pGameWorld, vec2 Pos, int Owner, int Type, vec2 Pos2) :
 	CEntity(pGameWorld, CGameWorld::ENTTYPE_TURRET)

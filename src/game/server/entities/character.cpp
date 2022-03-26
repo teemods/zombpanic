@@ -16,9 +16,9 @@
 #include <game/server/score.h>
 #include <game/server/teams.h>
 
+#include "laserwall.h"
 #include "panicdoor.h"
 #include "turret.h"
-#include "laserwall.h"
 
 MACRO_ALLOC_POOL_ID_IMPL(CCharacter, MAX_CLIENTS)
 

@@ -8,7 +8,7 @@
 class CLaserWall : public CEntity
 {
 public:
-	CLaserWall(CGameWorld *pGameWorld, vec2 From, vec2 To, int Owner, int Duration);
+	CLaserWall(CGameWorld *pGameWorld, vec2 Pos, vec2 Pos2, int Owner, int Duration);
 
 	virtual void Reset();
 	virtual void Tick();
