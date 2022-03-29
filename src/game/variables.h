@@ -231,7 +231,7 @@ MACRO_CONFIG_INT(PanicShotgunInitialDamage, panic_shotgun_initial_damage, 1, 1, 
 MACRO_CONFIG_INT(PanicGrenadeInitialDamage, panic_grenade_initial_damage, 4, 1, 9999, CFGFLAG_SERVER, "Initial damage value for the grenade")
 MACRO_CONFIG_INT(PanicNinjaInitialDamage, panic_ninja_initial_damage, 50, 1, 9999, CFGFLAG_SERVER, "Initial damage value for the ninja")
 
-MACRO_CONFIG_INT(PanicShotgunInitialShotSpread, panic_shotgun_shot_spread, 2, 1, 9999, CFGFLAG_SERVER, "Initial shot spread amount for shotgun shot (extra bullets for left and right)")
+MACRO_CONFIG_INT(PanicShotgunInitialShotSpread, panic_shotgun_shot_spread, 2, 1, 9999, CFGFLAG_SERVER, "Initial shot spread amount for shotgun shot (extra bullets amount on left and right)")
 
 MACRO_CONFIG_INT(PanicWallMaxSize, panic_wall_max_size, 500, 1, 9999, CFGFLAG_SERVER, "Maximum size of player laser wall")
 MACRO_CONFIG_INT(PanicWallDuration, panic_wall_duration, 6, 1, 9999, CFGFLAG_SERVER, "Duration of player laser wall (seconds)")

@@ -124,7 +124,7 @@ void CProjectile::Tick()
 	vec2 PrevPos = GetPos(Pt);
 	vec2 CurPos = GetPos(Ct);
 	int Collide = GameServer()->Collision()->IntersectLine(PrevPos, CurPos, &CurPos, 0);
-	CCharacter *OwnerChar = GameServer()->GetPlayerChar(m_Owner);
+	CCharacter *OwnerChr = GameServer()->GetPlayerChar(m_Owner);
 	CCharacter *TargetChr = GameServer()->m_World.IntersectCharacter(PrevPos, CurPos, 6.0f, CurPos, OwnerChar);
 
 	m_LifeSpan--;
@@ -132,7 +132,10 @@ void CProjectile::Tick()
 	// Projectile colliding with player
 	// Projectile colliding with the map
 	// Projectile getting out of the map
-	if(TargetChr || Collide || m_LifeSpan < 0 || GameLayerClipped(CurPos))
+	if(
+		(TargetChr && TargetChr->GetPlayer()->GetTeam() != OwnerChr->GetPlayer()->GetTeam()) || 
+		Collide || m_LifeSpan < 0 || GameLayerClipped(CurPos)
+	)
 	{
 		if(m_LifeSpan >= 0 || m_Type == WEAPON_GRENADE)
 			GameServer()->CreateSound(CurPos, m_SoundImpact);
