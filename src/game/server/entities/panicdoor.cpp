@@ -11,10 +11,10 @@
 
 #include "panicdoor.h"
 
-CPanicDoor::CPanicDoor(CGameWorld *pGameWorld, int Number) :
+CPanicDoor::CPanicDoor(CGameWorld *pGameWorld, int DoorNumber) :
 	CEntity(pGameWorld, CGameWorld::ENTTYPE_PICKUP)
 {
-	m_Number = Number;
+	m_DoorNumber = DoorNumber;
 
 	// m_State is defined by gamecontroller value. It do not have a default value
 
@@ -27,7 +27,7 @@ void CPanicDoor::Reset()
 
 void CPanicDoor::Tick()
 {
-	m_State = GameServer()->m_pController->DoorState(m_Number);
+	m_State = GameServer()->m_pController->DoorState(m_DoorNumber);
 
 	if(m_State == DOOR_OPEN || m_State == DOOR_ZOMBIE_OPEN || m_State == DOOR_ZOMBIE_CLOSING || m_State == DOOR_ZOMBIE_REOPENED)
 		return;
@@ -59,6 +59,6 @@ void CPanicDoor::Snap(int SnappingClient)
 
 	pP->m_X = (int)m_Pos.x;
 	pP->m_Y = (int)m_Pos.y;
-	pP->m_Type = (m_Number > MAX_DOORS / 2) ? POWERUP_HEALTH : POWERUP_ARMOR;
+	pP->m_Type = (m_DoorNumber > MAX_DOORS / 2) ? POWERUP_HEALTH : POWERUP_ARMOR;
 	pP->m_Subtype = 0;
 }

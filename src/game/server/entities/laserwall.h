@@ -16,8 +16,6 @@ public:
 
 private:
 	int m_ID2;
-
-	vec2 m_Pos;
 	vec2 m_Pos2;
 
 	int m_Owner;

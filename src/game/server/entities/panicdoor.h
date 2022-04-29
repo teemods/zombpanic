@@ -24,14 +24,14 @@ enum
 class CPanicDoor : public CEntity
 {
 public:
-	CPanicDoor(CGameWorld *pGameWorld, int Number);
+	CPanicDoor(CGameWorld *pGameWorld, int DoorNumber);
 
 	virtual void Reset();
 	virtual void Tick();
 	virtual void Snap(int SnappingClient);
 
 private:
-	short int m_Number;
+	short int m_DoorNumber;
 	short int m_State;
 };
 
