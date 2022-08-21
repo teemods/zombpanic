@@ -886,10 +886,16 @@ void CCharacter::Tick()
 		// Human statuses
 		if(GetPlayer()->GetTeam() == TEAM_BLUE)
 		{
-			char BulletMessage[16];
+			// BULLET MESSAGE
+			char BulletMessage[22];
 			str_format(BulletMessage, sizeof(BulletMessage), "%d Bullets", m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo);
 
-			char InvisibilityMessage[32];
+			// TURRET MESSAGE
+			char TurretMessage[22];
+			str_format(TurretMessage, sizeof(TurretMessage), "%s", (!m_TurretActive[m_Core.m_ActiveWeapon]) ? "Turret available" : "Turret unavailable");
+
+			// INVISIBILITY MESSAGE
+			char InvisibilityMessage[22];
 
 			// Using this logic the countdown will start
 			// only after the invisibility effect finish
@@ -924,8 +930,13 @@ void CCharacter::Tick()
 				str_copy(InvisibilityMessage, "Inv. available", sizeof(InvisibilityMessage));
 			}
 
-			char aBuf[64];
-			str_format(aBuf, sizeof(aBuf), "%s | %s | %s", BulletMessage, InvisibilityMessage, (!m_TurretActive[m_Core.m_ActiveWeapon]) ? "Turret available" : "Turret unavailable");
+			// SEND BROADCAST
+			char aBuf[66];
+			if(m_Core.m_ActiveWeapon == WEAPON_HAMMER) {
+				str_format(aBuf, sizeof(aBuf), "%s | %s", InvisibilityMessage, TurretMessage);
+			} else {
+				str_format(aBuf, sizeof(aBuf), "%s | %s | %s", BulletMessage, InvisibilityMessage, TurretMessage);
+			}
 			SendPersonalBroadcast(aBuf);
 		}
 
