@@ -681,7 +681,6 @@ void CCharacter::FireWeapon()
 	}
 }
 
-
 void CCharacter::HandleWeapons()
 {
 	//ninja
