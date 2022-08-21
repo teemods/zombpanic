@@ -439,20 +439,20 @@ void CGameContext::ConTop(IConsole::IResult *pResult, void *pUserData)
 
 	pSelf->Console()->Print(
 		IConsole::OUTPUT_LEVEL_STANDARD,
-		"rank",
+		"chatresp",
 		"This mod currently do not support the top.");
 
-	if(g_Config.m_SvHideScore)
-	{
-		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chatresp",
-			"Showing the top is not allowed on this server.");
-		return;
-	}
+	// if(g_Config.m_SvHideScore)
+	// {
+	// 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chatresp",
+	// 		"Showing the top is not allowed on this server.");
+	// 	return;
+	// }
 
-	if(pResult->NumArguments() > 0)
-		pSelf->Score()->ShowTop(pResult->m_ClientID, pResult->GetInteger(0));
-	else
-		pSelf->Score()->ShowTop(pResult->m_ClientID);
+	// if(pResult->NumArguments() > 0)
+	// 	pSelf->Score()->ShowTop(pResult->m_ClientID, pResult->GetInteger(0));
+	// else
+	// 	pSelf->Score()->ShowTop(pResult->m_ClientID);
 }
 
 void CGameContext::ConTimes(IConsole::IResult *pResult, void *pUserData)
