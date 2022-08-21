@@ -705,9 +705,10 @@ void IGameController::Tick()
 		}
 
 		// Round started. Wake up the initial zombies!
-		if (NumPlayers() > 1 && !m_Warmup)
+		if(NumPlayers() > 1 && !m_Warmup)
 		{
-			if (GameServer()->m_apPlayers[m_LastZombie]) { // Prevent crash if the zombie disconnected
+			if(GameServer()->m_apPlayers[m_LastZombie])  // Prevent crash if the zombie disconnected
+			{
 				GameServer()->m_apPlayers[m_LastZombie]->Pause(0, true);
 			}
 		}

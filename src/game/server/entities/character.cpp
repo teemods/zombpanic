@@ -439,6 +439,7 @@ void CCharacter::FireWeapon()
 		m_ReloadTimer = 125 * Server()->TickSpeed() / 1000;
 		GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO);
 		return;
+	}
 
 	vec2 ProjStartPos = m_Pos + Direction * GetProximityRadius() * 0.75f;
 
@@ -679,7 +680,7 @@ void CCharacter::FireWeapon()
 		m_ReloadTimer = FireDelay * Server()->TickSpeed() / 1000;
 	}
 }
-}
+
 
 void CCharacter::HandleWeapons()
 {
