@@ -270,11 +270,11 @@ int CTurret::GetInitialReloadTick()
 	if(m_Type == WEAPON_GRENADE)
 		Time = 3.00f; // m_ReloadTick = 3000 * Server()->TickSpeed() / (1000 + GameServer()->m_apPlayers[m_Owner]->m_AccData.m_TurretSpeed * 40);
 	if(m_Type == WEAPON_HAMMER)
-		Time = 20.00f;
+		Time = 25.00f;
 	if(m_Type == WEAPON_LASER)
-		Time = 36.00f;
+		Time = 35.00f;
 	if(m_Type == WEAPON_GUN)
-		Time = 1.00f; // m_ReloadTick = 3600 * Server()->TickSpeed() / (1000 + GameServer()->m_apPlayers[m_Owner]->m_AccData.m_TurretSpeed * 30);
+		Time = 0.50f; // m_ReloadTick = 3600 * Server()->TickSpeed() / (1000 + GameServer()->m_apPlayers[m_Owner]->m_AccData.m_TurretSpeed * 30);
 	if(m_Type == WEAPON_SHOTGUN)
 		Time = 2.80f; // m_ReloadTick = 3800 * Server()->TickSpeed() / (1000 + GameServer()->m_apPlayers[m_Owner]->m_AccData.m_TurretSpeed * 10);
 

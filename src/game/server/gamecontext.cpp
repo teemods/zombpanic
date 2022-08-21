@@ -267,7 +267,7 @@ void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamag
 				TeamMask = CmaskUnset(TeamMask, PlayerTeam);
 			}
 
-			apEnts[i]->TakeDamage(normalize(apEnts[i]->m_Pos - Pos) * g_Config.m_PanicGrenadeInitialDamage * 2, g_Config.m_PanicGrenadeInitialDamage, Owner, Weapon);
+			apEnts[i]->TakeDamage((normalize(apEnts[i]->m_Pos - Pos) * g_Config.m_PanicGrenadeInitialDamage / 2) * g_Config.m_PanicGrenadeForceMultiplier, g_Config.m_PanicGrenadeInitialDamage, Owner, Weapon);
 		}
 	}
 }
