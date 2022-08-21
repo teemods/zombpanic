@@ -932,9 +932,12 @@ void CCharacter::Tick()
 
 			// SEND BROADCAST
 			char aBuf[66];
-			if(m_Core.m_ActiveWeapon == WEAPON_HAMMER) {
+			if(m_Core.m_ActiveWeapon == WEAPON_HAMMER)
+			{
 				str_format(aBuf, sizeof(aBuf), "%s | %s", InvisibilityMessage, TurretMessage);
-			} else {
+			}
+			else
+			{
 				str_format(aBuf, sizeof(aBuf), "%s | %s | %s", BulletMessage, InvisibilityMessage, TurretMessage);
 			}
 			SendPersonalBroadcast(aBuf);
