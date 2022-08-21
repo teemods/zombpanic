@@ -886,6 +886,9 @@ void CCharacter::Tick()
 		// Human statuses
 		if(GetPlayer()->GetTeam() == TEAM_BLUE)
 		{
+			char BulletMessage[16];
+			str_format(BulletMessage, sizeof(BulletMessage), "%d Bullets", m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo);
+
 			char InvisibilityMessage[32];
 
 			// Using this logic the countdown will start
@@ -922,7 +925,7 @@ void CCharacter::Tick()
 			}
 
 			char aBuf[64];
-			str_format(aBuf, sizeof(aBuf), "%s | %s", InvisibilityMessage, (!m_TurretActive[m_Core.m_ActiveWeapon]) ? "Turret available" : "Turret unavailable");
+			str_format(aBuf, sizeof(aBuf), "%s | %s | %s", BulletMessage, InvisibilityMessage, (!m_TurretActive[m_Core.m_ActiveWeapon]) ? "Turret available" : "Turret unavailable");
 			SendPersonalBroadcast(aBuf);
 		}
 
