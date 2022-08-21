@@ -8,9 +8,9 @@ class CTurret : public CEntity
 public:
 	CTurret(CGameWorld *pGameWorld, vec2 Pos, int Owner, int Type, vec2 Pos2 = vec2(0, 0));
 
-	virtual void Reset();
-	virtual void Tick();
-	virtual void Snap(int SnappingClient);
+	virtual void Reset() override;
+	virtual void Tick() override;
+	virtual void Snap(int SnappingClient) override;
 
 	void Fire();
 

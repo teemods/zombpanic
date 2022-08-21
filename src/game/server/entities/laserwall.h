@@ -10,9 +10,9 @@ class CLaserWall : public CEntity
 public:
 	CLaserWall(CGameWorld *pGameWorld, vec2 Pos, vec2 Pos2, int Owner, int Duration);
 
-	virtual void Reset();
-	virtual void Tick();
-	virtual void Snap(int SnappingClient);
+	virtual void Reset() override;
+	virtual void Tick() override;
+	virtual void Snap(int SnappingClient) override;
 
 private:
 	int m_ID2;

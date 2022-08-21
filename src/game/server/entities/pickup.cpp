@@ -74,8 +74,8 @@ void CPickup::Tick()
 			if(pChr->GetPlayer()->GetTeam() == TEAM_RED || pChr->GetWeaponAmmo(m_Subtype) == MaximumAmmo)
 				continue;
 
-			if(m_Layer == LAYER_SWITCH && m_Number > 0 && !GameServer()->Collision()->m_pSwitchers[m_Number].m_Status[pChr->Team()])
-				continue;
+			// if(m_Layer == LAYER_SWITCH && m_Number > 0 && !GameServer()->Collision()->m_pSwitchers[m_Number].m_Status[pChr->Team()])
+			// 	continue;
 			// bool Sound = false;
 			// player picked us up, is someone was hooking us, let them go
 			int RespawnTime = -1;

@@ -26,9 +26,9 @@ class CPanicDoor : public CEntity
 public:
 	CPanicDoor(CGameWorld *pGameWorld, int DoorNumber);
 
-	virtual void Reset();
-	virtual void Tick();
-	virtual void Snap(int SnappingClient);
+	virtual void Reset() override;
+	virtual void Tick() override;
+	virtual void Snap(int SnappingClient) override;
 
 private:
 	short int m_DoorNumber;

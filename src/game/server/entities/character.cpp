@@ -316,7 +316,7 @@ void CCharacter::HandleNinja()
 				if(m_NumObjectsHit < 10)
 					m_apHitObjects[m_NumObjectsHit++] = apEnts[i];
 
-				aEnts[i]->TakeDamage(vec2(0, -10.0f), g_Config.m_PanicNinjaInitialDamage, m_pPlayer->GetCID(), WEAPON_NINJA);
+				apEnts[i]->TakeDamage(vec2(0, -10.0f), g_Config.m_PanicNinjaInitialDamage, m_pPlayer->GetCID(), WEAPON_NINJA);
 			}
 		}
 
@@ -433,7 +433,7 @@ void CCharacter::FireWeapon()
 	}
 
 	// check for ammo
-	if(!m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
+	if(!m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
 	{
 		// 125ms is a magical limit of how fast a human can click
 		m_ReloadTimer = 125 * Server()->TickSpeed() / 1000;
@@ -666,8 +666,8 @@ void CCharacter::FireWeapon()
 
 	m_AttackTick = Server()->Tick();
 
-	if(m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo > 0) // -1 == unlimited
-		m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo--;
+	if(m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo > 0) // -1 == unlimited
+		m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo--;
 
 	if(!m_ReloadTimer)
 	{
@@ -678,6 +678,7 @@ void CCharacter::FireWeapon()
 			GameServer()->TuningList()[m_TuneZone].Get(38 + m_Core.m_ActiveWeapon, &FireDelay);
 		m_ReloadTimer = FireDelay * Server()->TickSpeed() / 1000;
 	}
+}
 }
 
 void CCharacter::HandleWeapons()
@@ -702,17 +703,17 @@ void CCharacter::HandleWeapons()
 	{
 		if(m_ReloadTimer <= 0)
 		{
-			if(m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart < 0)
-				m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart = Server()->Tick();
+			if(m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart < 0)
+				m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart = Server()->Tick();
 
-			if((Server()->Tick() - m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart) >= AmmoRegenTime * Server()->TickSpeed() / 1000)
+			if((Server()->Tick() - m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart) >= AmmoRegenTime * Server()->TickSpeed() / 1000)
 			{
-				m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo = minimum(m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo + 1, g_pData->m_Weapons.m_aId[m_Core.m_ActiveWeapon].m_Maxammo);
-				m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart = -1;
+				m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo = minimum(m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo + 1, g_pData->m_Weapons.m_aId[m_Core.m_ActiveWeapon].m_Maxammo);
+				m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart = -1;
 			}
 		}
 		else
-			m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart = -1;
+			m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart = -1;
 	}
 
 	// fire Weapon, if wanted
@@ -942,7 +943,7 @@ void CCharacter::Tick()
 	}
 }
 
-void CCharacter::TickDefered()
+void CCharacter::TickDeferred()
 {
 	// advance the dummy
 	{
@@ -1103,7 +1104,7 @@ void CCharacter::Die(int Killer, int Weapon, bool Respawn)
 	if(Respawn)
 	{
 		m_Alive = false;
-		m_Solo = false;
+		m_Core.m_Solo = false;
 
 		GameServer()->m_World.RemoveEntity(this);
 		GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = 0;
@@ -1669,9 +1670,10 @@ void CCharacter::HandleTiles(int Index)
 	if(((m_TileIndex == TILE_FREEZE) || (m_TileFIndex == TILE_FREEZE)) && !m_Core.m_Super && !m_Core.m_DeepFrozen)
 	{
 		Freeze();
+	}
 
 	// ZombPanic
-	if(((m_TileIndex == TILE_UNFREEZE) || (m_TileFIndex == TILE_UNFREEZE)) && !m_DeepFreeze)
+	if(((m_TileIndex == TILE_UNFREEZE) || (m_TileFIndex == TILE_UNFREEZE)))
 	{
 		UnFreeze();
 
@@ -1718,16 +1720,11 @@ void CCharacter::HandleTiles(int Index)
 		m_NeededFaketuning |= FAKETUNE_NOHAMMER;
 		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
 	}
-	else if(((m_TileIndex == TILE_HIT_ENABLE) || (m_TileFIndex == TILE_HIT_ENABLE)) && (m_Core.m_HammerHitDisabled || m_Core.m_ShotgunHitDisabled || m_Core.m_GrenadeHitDisabled || m_Core.m_LaserHitDisabled))
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can hit others");
-		m_Core.m_ShotgunHitDisabled = false;
-		m_Core.m_GrenadeHitDisabled = false;
-		m_Core.m_HammerHitDisabled = false;
-		m_Core.m_LaserHitDisabled = false;
-		m_NeededFaketuning &= ~FAKETUNE_NOHAMMER;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
-	}
+	// else if(((m_TileIndex == TILE_HIT_ENABLE) || (m_TileFIndex == TIL{
+	// 	m_Core.m_LaserHitDisabled = false;
+	// 	m_NeededFaketuning &= ~FAKETUNE_NOHAMMER;
+	// 	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+	// }
 
 	// collide with others
 	if(((m_TileIndex == TILE_NPC_DISABLE) || (m_TileFIndex == TILE_NPC_DISABLE)) && !m_Core.m_CollisionDisabled)
@@ -2438,7 +2435,7 @@ bool CCharacter::UnFreeze()
 	if(m_FreezeTime > 0)
 	{
 		// m_Armor = m_MaxArmor;
-		if(!m_aWeapons[m_Core.m_ActiveWeapon].m_Got)
+		if(!m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Got)
 			m_Core.m_ActiveWeapon = WEAPON_GUN;
 		m_FreezeTime = 0;
 		m_Core.m_FreezeStart = 0;
@@ -2469,8 +2466,8 @@ void CCharacter::GiveWeapon(int Weapon, bool Remove, int Ammo)
 		m_Core.m_aWeapons[Weapon].m_Ammo = Ammo;
 	}
 
-	m_aWeapons[Weapon].m_Got = !Remove;
-	m_aWeapons[Weapon].m_Ammo = Ammo;
+	m_Core.m_aWeapons[Weapon].m_Got = !Remove;
+	m_Core.m_aWeapons[Weapon].m_Ammo = Ammo;
 }
 
 void CCharacter::GiveAllWeapons()
@@ -2609,6 +2606,11 @@ void CCharacter::Rescue()
 int64_t CCharacter::TeamMask()
 {
 	return Teams()->TeamMask(Team(), -1, GetPlayer()->GetCID());
+}
+
+void CCharacter::SwapClients(int Client1, int Client2)
+{
+	m_Core.SetHookedPlayer(m_Core.m_HookedPlayer == Client1 ? Client2 : m_Core.m_HookedPlayer == Client2 ? Client1 : m_Core.m_HookedPlayer);
 }
 
 vec2 CCharacter::GetVec2LastestInput()
