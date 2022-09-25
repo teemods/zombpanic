@@ -1369,6 +1369,7 @@ set(EXPECTED_DATA
   mapres/winter_mountains.png
   mapres/winter_mountains2.png
   mapres/winter_mountains3.png
+  maps/3\ Places.map
   maps/Armory.map
   maps/Beach\ House\ 2.map
   maps/Depot\ 2.map
