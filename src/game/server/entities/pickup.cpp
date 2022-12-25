@@ -27,8 +27,6 @@ CPickup::CPickup(CGameWorld *pGameWorld, int Type, int SubType, int Layer, int N
 	m_Layer = Layer;
 	m_Number = Number;
 
-	Reset();
-
 	GameWorld()->InsertEntity(this);
 }
 
@@ -63,11 +61,11 @@ void CPickup::Tick()
 	int MaximumAmmo = (m_Subtype == WEAPON_LASER) ? 1 : 10;
 
 	// Check if a player intersected us
-	CCharacter *apEnts[MAX_CLIENTS];
-	int Num = GameWorld()->FindEntities(m_Pos, 20.0f, (CEntity **)apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+	CEntity *apEnts[MAX_CLIENTS];
+	int Num = GameWorld()->FindEntities(m_Pos, 20.0f, apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 	for(int i = 0; i < Num; ++i)
 	{
-		CCharacter *pChr = apEnts[i];
+		auto *pChr = static_cast<CCharacter *>(apEnts[i]);
 
 		if(pChr && pChr->IsAlive())
 		{
@@ -254,7 +252,7 @@ void CPickup::Snap(int SnappingClient)
 
 void CPickup::Move()
 {
-	if(Server()->Tick() % int(Server()->TickSpeed() * 0.15f) == 0)
+	if(Server()->Tick() % (int)(Server()->TickSpeed() * 0.15f) == 0)
 	{
 		int Flags;
 		int index = GameServer()->Collision()->IsMover(m_Pos.x, m_Pos.y, &Flags);
