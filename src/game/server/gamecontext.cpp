@@ -293,6 +293,7 @@ void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamag
 		// float Dmg = Strength * l;
 		// if(!(int)Dmg)
 		// 	continue;
+		auto *pChr = static_cast<CCharacter *>(apEnts[i]);
 
 		if((GetPlayerChar(Owner) ? !GetPlayerChar(Owner)->GrenadeHitDisabled() : g_Config.m_SvHit) || NoDamage || Owner == pChr->GetPlayer()->GetCID())
 		{
@@ -310,7 +311,7 @@ void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamag
 				TeamMask = CmaskUnset(TeamMask, PlayerTeam);
 			}
 
-			apEnts[i]->TakeDamage((normalize(apEnts[i]->m_Pos - Pos) * g_Config.m_PanicGrenadeInitialDamage / 2) * g_Config.m_PanicGrenadeForceMultiplier, g_Config.m_PanicGrenadeInitialDamage, Owner, Weapon);
+			pChr->TakeDamage((normalize(pChr->m_Pos - Pos) * g_Config.m_PanicGrenadeInitialDamage / 2) * g_Config.m_PanicGrenadeForceMultiplier, g_Config.m_PanicGrenadeInitialDamage, Owner, Weapon);
 		}
 	}
 }
@@ -3516,7 +3517,7 @@ void CGameContext::CreateAllEntities(bool Initial)
 			if(Index >= ENTITY_OFFSET)
 			{
 				vec2 Pos(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
-				m_pController->OnEntity(Index - ENTITY_OFFSET, Pos, LAYER_GAME, pTiles[y * pTileMap->m_Width + x].m_Flags);
+				m_pController->OnEntity(Index - ENTITY_OFFSET, Pos.x, Pos.y, LAYER_GAME, pTiles[y * pTileMap->m_Width + x].m_Flags, false);
 			}
 
 			if(pFront)
@@ -3550,7 +3551,7 @@ void CGameContext::CreateAllEntities(bool Initial)
 				if(Index >= ENTITY_OFFSET)
 				{
 					vec2 Pos(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
-					m_pController->OnEntity(Index - ENTITY_OFFSET, Pos, LAYER_FRONT, pFront[y * pTileMap->m_Width + x].m_Flags);
+					m_pController->OnEntity(Index - ENTITY_OFFSET, Pos.x, Pos.y, LAYER_FRONT, pFront[y * pTileMap->m_Width + x].m_Flags, false);
 				}
 			}
 
@@ -3562,7 +3563,7 @@ void CGameContext::CreateAllEntities(bool Initial)
 				if(Index >= ENTITY_OFFSET)
 				{
 					vec2 Pos(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
-					m_pController->OnEntity(Index - ENTITY_OFFSET, Pos, LAYER_SWITCH, pSwitch[y * pTileMap->m_Width + x].m_Flags, pSwitch[y * pTileMap->m_Width + x].m_Number);
+					m_pController->OnEntity(Index - ENTITY_OFFSET, Pos.x, Pos.y, LAYER_SWITCH, pSwitch[y * pTileMap->m_Width + x].m_Flags, pSwitch[y * pTileMap->m_Width + x].m_Number);
 				}
 			}
 
@@ -3574,7 +3575,7 @@ void CGameContext::CreateAllEntities(bool Initial)
 				if(Index > 0)
 				{
 					vec2 Pos(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
-					m_pController->OnEntity(Index, Pos, LAYER_TELE, -1, pTele[y * pTileMap->m_Width + x].m_Number);
+					m_pController->OnEntity(Index, Pos.x, Pos.y, LAYER_TELE, -1, pTele[y * pTileMap->m_Width + x].m_Number);
 				}
 			}
 		}

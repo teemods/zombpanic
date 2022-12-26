@@ -317,7 +317,7 @@ void CCharacter::HandleNinja()
 				if(m_NumObjectsHit < 10)
 					m_apHitObjects[m_NumObjectsHit++] = pChr;
 
-				apEnts[i]->TakeDamage(vec2(0, -10.0f), g_Config.m_PanicNinjaInitialDamage, m_pPlayer->GetCID(), WEAPON_NINJA);
+				pChr->TakeDamage(vec2(0, -10.0f), g_Config.m_PanicNinjaInitialDamage, m_pPlayer->GetCID(), WEAPON_NINJA);
 			}
 		}
 
