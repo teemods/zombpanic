@@ -1676,11 +1676,11 @@ void CCharacter::HandleTiles(int Index)
 		m_LastBonus = false;
 		return;
 	}
-	SetTimeCheckpoint(Collision()->IsTimeCheckpoint(MapIndex));
-	SetTimeCheckpoint(Collision()->IsFTimeCheckpoint(MapIndex));
-	int TeleCheckpoint = Collision()->IsTeleCheckpoint(MapIndex);
-	if(TeleCheckpoint)
-		m_TeleCheckpoint = TeleCheckpoint;
+	// SetTimeCheckpoint(Collision()->IsTimeCheckpoint(MapIndex));
+	// SetTimeCheckpoint(Collision()->IsFTimeCheckpoint(MapIndex));
+	// int TeleCheckpoint = Collision()->IsTeleCheckpoint(MapIndex);
+	// if(TeleCheckpoint)
+	// 	m_TeleCheckpoint = TeleCheckpoint;
 
 	GameServer()->m_pController->HandleCharacterTiles(this, Index);
 
